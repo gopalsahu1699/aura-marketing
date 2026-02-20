@@ -1,15 +1,15 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createBrowserClient as createSupabaseBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// This is the client-side supabase client
-export const createBrowserClientInstance = () => {
+/**
+ * Creates a client-side Supabase client with environment variable checks.
+ * Uses @supabase/ssr for better session synchronization in Next.js.
+ */
+export const createBrowserClient = () => {
     if (!supabaseUrl || !supabaseKey) {
         console.error('Supabase URL or Anon Key is missing in environment variables');
     }
-    return createBrowserClient(supabaseUrl!, supabaseKey!);
+    return createSupabaseBrowserClient(supabaseUrl!, supabaseKey!);
 };
-
-// Alias for existing imports
-export const createBrowserClient = createBrowserClientInstance;
