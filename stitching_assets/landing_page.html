@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aura Marketing | AI-Powered Social Media Automation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8c2bee",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#0a0610",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(140, 43, 238, 0.2);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(140, 43, 238, 0.15) 0%, transparent 70%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 selection:bg-primary/30">
+<!-- Top Navigation -->
+<header class="fixed top-0 w-full z-50 glass-card border-b border-primary/10">
+<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl font-bold">auto_awesome</span>
+<span class="text-xl font-bold tracking-tight">Aura Marketing</span>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#features">Features</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#how-it-works">How it Works</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#pricing">Pricing</a>
+<a class="text-sm font-medium hover:text-primary transition-colors" href="#">Testimonials</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden sm:block text-sm font-bold px-4 py-2 rounded-lg hover:bg-primary/10 transition-colors">Login</button>
+<button class="bg-primary text-white text-sm font-bold px-6 py-2.5 rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                    Start Free Trial
+                </button>
+</div>
+</div>
+</header>
+<!-- Hero Section -->
+<section class="relative pt-32 pb-20 overflow-hidden hero-gradient">
+<div class="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+<div class="flex flex-col gap-8">
+<div class="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-1.5 rounded-full w-fit">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<span class="text-xs font-bold uppercase tracking-wider text-primary">Next-Gen Automation</span>
+</div>
+<h1 class="text-5xl md:text-7xl font-black leading-[1.1] tracking-tight">
+                    AI That Grows Your Social Media <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">Automatically</span>
+</h1>
+<p class="text-lg text-slate-400 max-w-lg leading-relaxed">
+                    Revolutionize your presence across Instagram, Facebook, YouTube, and Google Business with our all-in-one AI-powered marketing orchestration platform.
+                </p>
+<div class="flex flex-wrap gap-4">
+<button class="bg-primary text-white font-bold px-8 py-4 rounded-xl hover:scale-105 transition-transform shadow-xl shadow-primary/25">
+                        Start Free Trial
+                    </button>
+<button class="bg-slate-800/50 border border-slate-700 text-white font-bold px-8 py-4 rounded-xl hover:bg-slate-800 transition-colors">
+                        Book Demo
+                    </button>
+</div>
+<div class="flex items-center gap-6 pt-4">
+<div class="flex -space-x-3">
+<img class="w-10 h-10 rounded-full border-2 border-background-dark" data-alt="Customer avatar face 1" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVg5nQt_qid74GgfhUtiM_dQ1CFXcRnn9HTnKMcK2dxR61Q_wkkuM_zq2p1Cy0hoEYPFzKP81KdHmbpuOZdJqNX9PiG2HkItysqWI_YvqlzBe1mQojOUjqP9sLDIh_g446qMTLNeOFwu4X6gkTW5LVze0SieEcpVZD3RsSSs6ZaR1_WwKBmPCb7eJrM4J1j3sYMal7gi4yghjRJuH40MVf_tTX-tVBQA67kzwT5CUOZzWXVhDSZsX11hcMAlbbO0H7AS0Ke8p0-MA"/>
+<img class="w-10 h-10 rounded-full border-2 border-background-dark" data-alt="Customer avatar face 2" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTGsS89Zwz6IwrPsZEHpUvtq9pkQAIz9p7IdTUWKlUAzZ235u7XbWzpMCJsyWB4hljOFDZfoqOJ3QmuMHOannkXFd9gnLJsmvNFKm1RfdlPVm6opW3-CErrFxIuZ5tQpDWGT_JMwaKQIX1n68rdQ7n6YYYJ4hvni42qiTWEnPGmxr6Q9gf3drAF3tVcqyDqjP1fOGOoeJZX-t6McZFt7UGfSE58RLpRPg_WgD4kzcfA-D2chPPXe_1vO3wRQRf_HuVPe2UZD34Y5U"/>
+<img class="w-10 h-10 rounded-full border-2 border-background-dark" data-alt="Customer avatar face 3" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANbi9jBlpnlO6kDbqdEZmaPQOKfFby_KcnsYd3M54zPVNjAUeN1igwjs69rjpkwOD2bzWKoyD_MSUVsVHlLxGgKiXXKLlAqTKjGtmPchderPoOdxGwU6RRLMis9lEMByuZq4fbHk5IPUX-QcusaKoOzD3m-zpPcQatTBIZ4oruqEmHZnLYAXi4u2_RrZCTkATGfdc2lvixvxjiF84fTLvXVXa16Bh-usl34ijejDb97kiw_io-5RnsU08XU7g4rq6JfI9hpsz1ANg"/>
+</div>
+<div class="text-sm">
+<p class="font-bold">Join 10,000+ marketers</p>
+<div class="flex items-center text-yellow-500">
+<span class="material-symbols-outlined text-sm">star</span>
+<span class="material-symbols-outlined text-sm">star</span>
+<span class="material-symbols-outlined text-sm">star</span>
+<span class="material-symbols-outlined text-sm">star</span>
+<span class="material-symbols-outlined text-sm">star</span>
+<span class="ml-1 text-slate-400 text-xs">4.9/5 rating</span>
+</div>
+</div>
+</div>
+</div>
+<div class="relative group">
+<div class="absolute -inset-1 bg-gradient-to-r from-primary/30 to-purple-500/30 rounded-2xl blur-2xl group-hover:opacity-100 transition duration-1000"></div>
+<div class="relative glass-card rounded-2xl p-4 overflow-hidden shadow-2xl">
+<img class="rounded-xl w-full h-auto" data-alt="Dashboard analytics showing engagement growth charts" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDENaj2_vmIOBbFT8K82__6XBnQq6ZSccDF6ep7fRfCrJnK0gTLAjGO0jkxPCeIrm9GpGiYZfjdt9u153VjLEUkSe7HTy5UfwclVxzr6naA6kBlnn5bt4GOWtBHw2YO1KoWViBiJgI0d7EgZEwstu1K4_-Htn9kBb1KjCo7g595b_xVXwkVFN2ihmLkcJCK0frA3R9bQ-jEJvvTcw-FObafovSCgMzcAq_vQrq8YyRbsXUxVEoO2vzpK7ASX6icnebB7cFcmlfjP6U"/>
+<!-- Floating Stat UI Overlay -->
+<div class="absolute top-10 -right-4 bg-primary p-4 rounded-xl shadow-2xl hidden md:block">
+<p class="text-[10px] uppercase font-bold text-white/70">Daily Growth</p>
+<p class="text-2xl font-black text-white">+142%</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Social Proof -->
+<section class="py-12 border-y border-slate-800 bg-background-dark/50">
+<div class="max-w-7xl mx-auto px-6">
+<p class="text-center text-sm font-bold text-slate-500 mb-8 tracking-widest uppercase">Trusted by industry leaders</p>
+<div class="flex flex-wrap justify-center gap-12 opacity-40 grayscale">
+<div class="text-2xl font-black italic">TECHFLOW</div>
+<div class="text-2xl font-black italic">VANTAGE</div>
+<div class="text-2xl font-black italic">NEXUS</div>
+<div class="text-2xl font-black italic">LUMINA</div>
+<div class="text-2xl font-black italic">VERTEX</div>
+</div>
+</div>
+</section>
+<!-- Features Section -->
+<section class="py-24 relative" id="features">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-20 flex flex-col items-center">
+<h2 class="text-primary font-bold tracking-widest uppercase text-sm mb-4">Powerful Features</h2>
+<p class="text-4xl md:text-5xl font-black tracking-tight mb-6">Everything you need to scale</p>
+<p class="text-slate-400 max-w-2xl">Our AI handles the heavy lifting—from content creation to review management—so you can focus on high-level strategy.</p>
+</div>
+<div class="grid md:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="p-8 rounded-2xl glass-card border-white/5 hover:border-primary/40 transition-all group">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">auto_fix_high</span>
+</div>
+<h3 class="text-xl font-bold mb-3">AI Content Gen</h3>
+<p class="text-slate-400 text-sm leading-relaxed">Generate high-converting captions, viral threads, and AI-optimized visuals in seconds.</p>
+</div>
+<!-- Card 2 -->
+<div class="p-8 rounded-2xl glass-card border-white/5 hover:border-primary/40 transition-all group">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">trending_up</span>
+</div>
+<h3 class="text-xl font-bold mb-3">Trend Analysis</h3>
+<p class="text-slate-400 text-sm leading-relaxed">Real-time scanning of viral topics and hashtags to keep your brand at the center of the conversation.</p>
+</div>
+<!-- Card 3 -->
+<div class="p-8 rounded-2xl glass-card border-white/5 hover:border-primary/40 transition-all group">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">rate_review</span>
+</div>
+<h3 class="text-xl font-bold mb-3">Smart Review AI</h3>
+<p class="text-slate-400 text-sm leading-relaxed">Automated, intelligent responses for GMB reviews and social comments that sound human.</p>
+</div>
+<!-- Card 4 -->
+<div class="p-8 rounded-2xl glass-card border-white/5 hover:border-primary/40 transition-all group">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">schedule_send</span>
+</div>
+<h3 class="text-xl font-bold mb-3">Automated Posting</h3>
+<p class="text-slate-400 text-sm leading-relaxed">Smart scheduling that finds the peak engagement window for every platform automatically.</p>
+</div>
+<!-- Card 5 -->
+<div class="p-8 rounded-2xl glass-card border-white/5 hover:border-primary/40 transition-all group">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">insights</span>
+</div>
+<h3 class="text-xl font-bold mb-3">Growth Prediction</h3>
+<p class="text-slate-400 text-sm leading-relaxed">Data-driven forecasts for follower growth and engagement metrics based on current trends.</p>
+</div>
+<!-- Card 6 (Bonus/Filler) -->
+<div class="p-8 rounded-2xl bg-primary flex flex-col justify-center items-center text-center gap-4 hover:scale-[1.02] transition-transform">
+<h3 class="text-2xl font-black text-white italic">Ready to see it in action?</h3>
+<button class="bg-white text-primary font-bold px-6 py-2.5 rounded-lg shadow-lg">Start Trial</button>
+</div>
+</div>
+</div>
+</section>
+<!-- How it Works -->
+<section class="py-24 bg-primary/5" id="how-it-works">
+<div class="max-w-7xl mx-auto px-6">
+<div class="grid md:grid-cols-2 gap-16 items-center">
+<div class="order-2 md:order-1">
+<div class="relative rounded-2xl overflow-hidden glass-card p-2 border-primary/30">
+<img class="rounded-xl w-full" data-alt="Visual guide showing the step-by-step setup process" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvLIW0Feg7pOf47k-TSBfft7_3bYB4r8OCUa7g1YQ2MyaZpiNvU9OKgihOYxo2Uu-7g8ejrcPSf82foUJHH-KHWphTFYwu0ehmFLFWDMeddZSy4xJ-UnQh15ci10q70SKP8NkHYWsAsXxqqw-HMONiZyI0nyVpokcyoF0GsY3_fZXCTVcawG2-o-RkLCpxmQk4RWO7gdha0tHpP5ac01ihuWJdPzu570O9M_tH42bO12p0obT2hGtTyfDaArWlCldyDx9W0WRmFNI"/>
+</div>
+</div>
+<div class="order-1 md:order-2 flex flex-col gap-10">
+<h2 class="text-4xl font-black leading-tight">Simple steps to 10x your presence</h2>
+<div class="flex gap-6">
+<div class="flex-none w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-black">1</div>
+<div>
+<h4 class="text-xl font-bold mb-2">Connect Your Accounts</h4>
+<p class="text-slate-400">Securely sync your IG, FB, YT, and GMB with one-click API integrations. No passwords shared.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="flex-none w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-black">2</div>
+<div>
+<h4 class="text-xl font-bold mb-2">Generate &amp; Schedule</h4>
+<p class="text-slate-400">Let the AI draft content based on your brand voice. Approve or edit, then set to autopilot.</p>
+</div>
+</div>
+<div class="flex gap-6">
+<div class="flex-none w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-black">3</div>
+<div>
+<h4 class="text-xl font-bold mb-2">Watch Real-time Growth</h4>
+<p class="text-slate-400">Monitor your reach and engagement climb. Our AI learns and optimizes your strategy daily.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="py-24" id="pricing">
+<div class="max-w-7xl mx-auto px-6">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-black mb-4">Scalable Pricing for Every Brand</h2>
+<p class="text-slate-400">Choose the plan that fits your growth ambitions.</p>
+</div>
+<div class="grid md:grid-cols-3 gap-8">
+<!-- Starter -->
+<div class="p-8 rounded-2xl glass-card flex flex-col">
+<h3 class="text-xl font-bold mb-2">Starter</h3>
+<p class="text-slate-400 text-sm mb-6">Perfect for solo creators.</p>
+<div class="mb-8">
+<span class="text-5xl font-black">$0</span>
+<span class="text-slate-500">/mo</span>
+</div>
+<ul class="space-y-4 mb-8 flex-1">
+<li class="flex items-center gap-2 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Up to 3 Social Profiles
+                        </li>
+<li class="flex items-center gap-2 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            10 AI Posts / Month
+                        </li>
+<li class="flex items-center gap-2 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Basic Analytics
+                        </li>
+</ul>
+<button class="w-full border border-slate-700 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors">Start for Free</button>
+</div>
+<!-- Pro -->
+<div class="p-8 rounded-2xl glass-card border-primary/60 relative scale-105 shadow-2xl shadow-primary/20 flex flex-col">
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] uppercase font-black px-4 py-1 rounded-full">Most Popular</div>
+<h3 class="text-xl font-bold mb-2">Pro</h3>
+<p class="text-slate-400 text-sm mb-6">For growing businesses.</p>
+<div class="mb-8">
+<span class="text-5xl font-black">$49</span>
+<span class="text-slate-500">/mo</span>
+</div>
+<ul class="space-y-4 mb-8 flex-1">
+<li class="flex items-center gap-2 text-sm font-bold">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Unlimited Profiles
+                        </li>
+<li class="flex items-center gap-2 text-sm font-bold">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Unlimited AI Post Generation
+                        </li>
+<li class="flex items-center gap-2 text-sm font-bold">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Smart Review AI
+                        </li>
+<li class="flex items-center gap-2 text-sm font-bold">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Growth Predictor Engine
+                        </li>
+</ul>
+<button class="w-full bg-primary py-3 rounded-xl font-bold hover:brightness-110 shadow-lg shadow-primary/30 transition-all">Go Pro Now</button>
+</div>
+<!-- Enterprise -->
+<div class="p-8 rounded-2xl glass-card flex flex-col">
+<h3 class="text-xl font-bold mb-2">Enterprise</h3>
+<p class="text-slate-400 text-sm mb-6">Custom tools for agencies.</p>
+<div class="mb-8">
+<span class="text-4xl font-black">Custom</span>
+</div>
+<ul class="space-y-4 mb-8 flex-1">
+<li class="flex items-center gap-2 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            White-label Reporting
+                        </li>
+<li class="flex items-center gap-2 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Dedicated Account Manager
+                        </li>
+<li class="flex items-center gap-2 text-sm">
+<span class="material-symbols-outlined text-primary text-lg">check_circle</span>
+                            Priority API Access
+                        </li>
+</ul>
+<button class="w-full border border-slate-700 py-3 rounded-xl font-bold hover:bg-slate-800 transition-colors">Contact Sales</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Testimonials -->
+<section class="py-24 bg-background-dark overflow-hidden">
+<div class="max-w-7xl mx-auto px-6">
+<h2 class="text-3xl font-black text-center mb-16">Results that speak for themselves</h2>
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="p-8 glass-card rounded-2xl italic text-slate-300 relative">
+<span class="material-symbols-outlined absolute top-4 right-4 text-primary/30 text-4xl">format_quote</span>
+                    "Aura Marketing saved me 20 hours a week on social media management. Our engagement has tripled in just 2 months!"
+                    <div class="mt-8 flex items-center gap-4 non-italic">
+<img class="w-12 h-12 rounded-full" data-alt="Sarah Miller headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAp2en-MyTHBs59Fdt-VCXe5pNx0ModPNLduii0KehORcd7M1QxRF3I09vkyeRijh8iezLDp6PsiXoyzLWeRa7MUKekxzO1Fhw4zZelEXA8J6IB22Zz-RXvtpUNqCIv2lSUC8GLhZXE_4LM2FIZ6R-NP2a0cyFQnkbSrJi-_cqtKUmnrkcIjdydQsbBZRhV60HJKU4SCijItwBGIXewnxI1fcXRg7DitkNvLe01XaE2zwyitMI_wJc4JDEsUN1FqL16_BwjExuSZTM"/>
+<div>
+<p class="font-bold text-white">Sarah Miller</p>
+<p class="text-xs text-slate-500">CMO at GlowUp Agency</p>
+</div>
+</div>
+</div>
+<div class="p-8 glass-card rounded-2xl italic text-slate-300 relative">
+<span class="material-symbols-outlined absolute top-4 right-4 text-primary/30 text-4xl">format_quote</span>
+                    "The Trend Analysis feature is a cheat code. We're consistently reaching new audiences by hopping on viral topics automatically."
+                    <div class="mt-8 flex items-center gap-4 non-italic">
+<img class="w-12 h-12 rounded-full" data-alt="David Chen headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtU_5PTihmd3g8mBmKOQlULU25DXv1Wk04-SblfthWbtdHkwjk8m3AWM16oPx6kmbg7wW3pVz6dpBJLD1vWr_E9o7SDO5EsvA8Wn0ZtrY-E4SjYIUDrkgvv79iWz5St_kgahMbsrvsbs6yBchD5UYhrqlxY9oNbY8arwjY1sliqcBT67DDzrEcAIjHn8TIBUckXlwvyMJgVp_HuhjERKEqD_wwGdxGEZ6y1FUysmU7lr760KFEA-CreZvte9934BJH5P0RrF4eRcI"/>
+<div>
+<p class="font-bold text-white">David Chen</p>
+<p class="text-xs text-slate-500">Founder of TechVibe</p>
+</div>
+</div>
+</div>
+<div class="p-8 glass-card rounded-2xl italic text-slate-300 relative md:hidden lg:block">
+<span class="material-symbols-outlined absolute top-4 right-4 text-primary/30 text-4xl">format_quote</span>
+                    "Finally, an AI tool that doesn't sound like a robot. The Smart Review AI manages our GMB perfectly and maintains our brand voice."
+                    <div class="mt-8 flex items-center gap-4 non-italic">
+<img class="w-12 h-12 rounded-full" data-alt="Emma Roberts headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzwX8NBveE1xkrgqO6Qw0S7owxsZxUh151czrko1ZaUPfRM7owdeD_zjwUt9x1Frn5lPwCiCPpz8ONK6ADQvH9l-4XuTNagw6z1TGd9Hc4Fel7zsfhS5NY4971__0Typ3r27iDZhZHld7ge4Kar8aFvPmb-gIPIOpSxBAhTBP9AI6kJTsjf6RHoe0pDZRc7U6OF3c9LYbFnK_pE4c9DCrzFOxu-4i4fHb4rbaZzxmUSKEtkew7GYYGseESj2f_qAJ4RVN0vNslz5A"/>
+<div>
+<p class="font-bold text-white">Emma Roberts</p>
+<p class="text-xs text-slate-500">Small Biz Owner</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-24 relative overflow-hidden">
+<div class="absolute inset-0 bg-primary/20 blur-3xl rounded-full translate-y-1/2"></div>
+<div class="max-w-4xl mx-auto px-6 relative text-center">
+<h2 class="text-4xl md:text-6xl font-black mb-8 leading-tight">Start Growing With <span class="text-primary italic">AI</span> Today</h2>
+<p class="text-xl text-slate-400 mb-12">No credit card required. 14-day free trial on all Pro features.</p>
+<div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+<button class="bg-primary text-white font-bold px-10 py-5 rounded-2xl text-xl shadow-2xl shadow-primary/40 hover:scale-105 transition-all">
+                    Create Your Account
+                </button>
+<button class="bg-slate-800 border border-slate-700 font-bold px-10 py-5 rounded-2xl text-xl hover:bg-slate-700 transition-colors">
+                    Talk to an Expert
+                </button>
+</div>
+<p class="mt-8 text-sm text-slate-500 flex items-center justify-center gap-4">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">verified</span> No setup fee</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">verified</span> Cancel anytime</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-xs">verified</span> 24/7 Support</span>
+</p>
+</div>
+</section>
+<!-- Footer -->
+<footer class="py-12 border-t border-slate-800">
+<div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-2xl font-bold">auto_awesome</span>
+<span class="text-lg font-bold tracking-tight">Aura Marketing</span>
+</div>
+<p class="text-slate-500 text-sm">© 2024 Aura Marketing Inc. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="text-slate-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">share</span></a>
+<a class="text-slate-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">public</span></a>
+<a class="text-slate-500 hover:text-white transition-colors" href="#"><span class="material-symbols-outlined">mail</span></a>
+</div>
+</div>
+</footer>
+</body></html>

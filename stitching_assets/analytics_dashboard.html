@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aura Marketing - Analytics &amp; Reporting</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8c2bee",
+                        "background-light": "#f7f6f8",
+                        "background-dark": "#191022",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(140, 43, 238, 0.2);
+            border-radius: 10px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 antialiased font-display">
+<div class="flex h-screen overflow-hidden">
+<!-- Side Navigation -->
+<aside class="w-64 flex-shrink-0 bg-background-light dark:bg-background-dark border-r border-slate-200 dark:border-primary/20 hidden lg:flex flex-col">
+<div class="p-6 flex items-center gap-3">
+<div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h1 class="text-lg font-bold tracking-tight">Aura Marketing</h1>
+<p class="text-xs text-slate-500 dark:text-primary/60">AI Platform</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="text-sm font-medium">Campaigns</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary text-white shadow-lg shadow-primary/20" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="text-sm font-medium">Content</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Audience</span>
+</a>
+<div class="pt-4 pb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">Configuration</div>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<div class="bg-primary/10 rounded-xl p-4 border border-primary/20">
+<p class="text-xs font-semibold text-primary mb-2 uppercase tracking-tighter">Pro Plan Active</p>
+<p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-3">You have used 72% of your monthly AI credits.</p>
+<button class="w-full py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary/90 transition-all">Upgrade Plan</button>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto custom-scrollbar">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-primary/10 px-8 py-4 flex flex-wrap items-center justify-between gap-4">
+<div>
+<h2 class="text-2xl font-black tracking-tight">Analytics &amp; Reporting</h2>
+<p class="text-sm text-slate-500 dark:text-slate-400">Detailed performance insights for your AI-automated campaigns.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center bg-white dark:bg-primary/10 border border-slate-200 dark:border-primary/20 rounded-lg px-3 py-2">
+<span class="material-symbols-outlined text-sm mr-2 text-primary">calendar_today</span>
+<span class="text-sm font-medium">Last 30 Days</span>
+<span class="material-symbols-outlined text-sm ml-2">expand_more</span>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Export Report
+                    </button>
+</div>
+</header>
+<div class="p-8 space-y-8">
+<!-- ROI Section -->
+<section>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-primary rounded-xl p-6 text-white shadow-xl shadow-primary/20 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl transition-all group-hover:scale-150"></div>
+<p class="text-sm font-medium opacity-80 mb-1">Total Marketing ROI</p>
+<h3 class="text-3xl font-black mb-4">$12,450.00</h3>
+<div class="flex items-center gap-2">
+<span class="flex items-center text-xs font-bold bg-white/20 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-xs mr-1">trending_up</span>
+                                    +12.5%
+                                </span>
+<span class="text-xs opacity-60">vs previous period</span>
+</div>
+</div>
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Attributed Revenue</p>
+<h3 class="text-3xl font-black mb-4">$45,200.00</h3>
+<div class="flex items-center gap-2">
+<span class="flex items-center text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-xs mr-1">trending_up</span>
+                                    +8.2%
+                                </span>
+<span class="text-xs text-slate-400">AI-attributed growth</span>
+</div>
+</div>
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6">
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">AI Efficiency Gain</p>
+<h3 class="text-3xl font-black mb-4">+24%</h3>
+<div class="flex items-center gap-2">
+<span class="flex items-center text-xs font-bold text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+<span class="material-symbols-outlined text-xs mr-1">trending_up</span>
+                                    +4.1%
+                                </span>
+<span class="text-xs text-slate-400">Human hours saved</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Platform Tabs -->
+<section>
+<div class="flex border-b border-slate-200 dark:border-primary/10 mb-6 overflow-x-auto gap-8">
+<button class="border-b-2 border-primary pb-3 px-2 text-sm font-bold text-primary flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">apps</span> All Channels
+                        </button>
+<button class="border-b-2 border-transparent pb-3 px-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">photo_camera</span> Instagram
+                        </button>
+<button class="border-b-2 border-transparent pb-3 px-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">social_leaderboard</span> Facebook
+                        </button>
+<button class="border-b-2 border-transparent pb-3 px-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">play_circle</span> YouTube
+                        </button>
+<button class="border-b-2 border-transparent pb-3 px-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-lg">storefront</span> GMB
+                        </button>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+<!-- Chart 1: Growth vs Engagement -->
+<div class="xl:col-span-2 bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6">
+<div class="flex items-center justify-between mb-8">
+<h4 class="text-lg font-bold">Follower Growth vs. Engagement</h4>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-xs text-slate-500">Growth</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-slate-400"></div>
+<span class="text-xs text-slate-500">Engagement</span>
+</div>
+</div>
+</div>
+<div class="h-64 flex items-end gap-2 px-2 relative">
+<!-- Mock Chart Lines -->
+<div class="absolute inset-x-0 bottom-0 h-full flex flex-col justify-between opacity-10 pointer-events-none">
+<div class="w-full border-t border-slate-400"></div>
+<div class="w-full border-t border-slate-400"></div>
+<div class="w-full border-t border-slate-400"></div>
+<div class="w-full border-t border-slate-400"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[60%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-1/3 rounded-t transition-all group-hover:h-1/2"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[45%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-2/3 rounded-t transition-all group-hover:h-3/4"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[80%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-1/2 rounded-t transition-all group-hover:h-2/3"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[35%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-3/4 rounded-t transition-all group-hover:h-5/6"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[90%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-2/5 rounded-t transition-all group-hover:h-1/2"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[55%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-4/5 rounded-t transition-all group-hover:h-full"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[70%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-1/4 rounded-t transition-all group-hover:h-1/3"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[40%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-3/5 rounded-t transition-all group-hover:h-4/5"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[65%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-2/3 rounded-t transition-all group-hover:h-3/4"></div>
+</div>
+<div class="flex-1 bg-primary/20 rounded-t h-[85%] relative group">
+<div class="absolute inset-x-0 bottom-0 bg-primary h-1/2 rounded-t transition-all group-hover:h-2/3"></div>
+</div>
+</div>
+<div class="flex justify-between mt-4 px-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+<span>Mon</span>
+<span>Tue</span>
+<span>Wed</span>
+<span>Thu</span>
+<span>Fri</span>
+<span>Sat</span>
+<span>Sun</span>
+</div>
+</div>
+<!-- Heatmap -->
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6">
+<h4 class="text-lg font-bold mb-6">Content Heatmap</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Best times to post for max engagement.</p>
+<div class="grid grid-cols-7 gap-1">
+<!-- Mock Heatmap Grid -->
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/20 rounded"></div>
+<div class="aspect-square bg-primary/40 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/60 rounded"></div>
+<div class="aspect-square bg-primary/20 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/20 rounded"></div>
+<div class="aspect-square bg-primary/90 rounded border-2 border-white/20"></div>
+<div class="aspect-square bg-primary/30 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/60 rounded"></div>
+<div class="aspect-square bg-primary/20 rounded"></div>
+<div class="aspect-square bg-primary/40 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/40 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/20 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/30 rounded"></div>
+<div class="aspect-square bg-primary/80 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+<div class="aspect-square bg-primary/40 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/10 rounded"></div>
+<div class="aspect-square bg-primary/60 rounded"></div>
+<div class="aspect-square bg-primary/20 rounded"></div>
+<div class="aspect-square bg-primary/5 rounded"></div>
+</div>
+<div class="mt-8 flex items-center justify-between text-[10px] text-slate-400 font-bold">
+<span>6AM</span>
+<span>12PM</span>
+<span>6PM</span>
+<span>12AM</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Audience and Sentiment -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6">
+<h4 class="text-lg font-bold mb-6">Audience Demographics</h4>
+<div class="flex items-center gap-8">
+<div class="relative w-32 h-32 flex items-center justify-center">
+<svg class="w-full h-full rotate-[-90deg]" viewbox="0 0 36 36">
+<circle class="stroke-slate-200 dark:stroke-slate-800" cx="18" cy="18" fill="none" r="16" stroke-width="4"></circle>
+<circle class="stroke-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="65, 100" stroke-width="4"></circle>
+<circle class="stroke-primary/40" cx="18" cy="18" fill="none" r="16" stroke-dasharray="25, 100" stroke-dashoffset="-65" stroke-width="4"></circle>
+</svg>
+<div class="absolute text-center">
+<p class="text-xl font-bold">14.2k</p>
+<p class="text-[9px] text-slate-500 uppercase font-black">Total</p>
+</div>
+</div>
+<div class="flex-1 space-y-4">
+<div>
+<div class="flex justify-between text-xs font-bold mb-1">
+<span>Female</span>
+<span class="text-primary">65%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full w-[65%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-1">
+<span>Male</span>
+<span class="text-primary">25%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary/60 rounded-full w-[25%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-xs font-bold mb-1">
+<span>Other</span>
+<span class="text-primary">10%</span>
+</div>
+<div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary/20 rounded-full w-[10%]"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl p-6">
+<div class="flex items-center justify-between mb-6">
+<h4 class="text-lg font-bold">AI Sentiment Analysis</h4>
+<span class="text-xs font-bold bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full uppercase">Mostly Positive</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex-1">
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                                    Across all platforms, customers are highlighting your <span class="text-primary font-bold">Innovation</span> and <span class="text-primary font-bold">Speed</span>.
+                                </p>
+<div class="flex flex-wrap gap-2">
+<span class="text-[10px] font-bold px-2 py-1 bg-primary/10 border border-primary/20 rounded text-primary uppercase">Helpful (82)</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-primary/10 border border-primary/20 rounded text-primary uppercase">Fast (64)</span>
+<span class="text-[10px] font-bold px-2 py-1 bg-primary/10 border border-primary/20 rounded text-primary uppercase">Modern (41)</span>
+</div>
+</div>
+<div class="w-32 h-32 relative bg-primary/10 rounded-full flex flex-col items-center justify-center border-4 border-dashed border-primary/20">
+<span class="material-symbols-outlined text-4xl text-primary mb-1">sentiment_very_satisfied</span>
+<span class="text-2xl font-black">78%</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Top Performing Posts -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h4 class="text-lg font-bold">Top Performing Posts</h4>
+<a class="text-sm font-bold text-primary hover:underline" href="#">View All Gallery</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<!-- Post Card 1 -->
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl overflow-hidden group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Abstract colorful neon digital artwork" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlfbv0UevhnGaokvYj0_-b3i3rC9jVTJI0HgG6A_SJ9bQ-OHl2wpRmk3405aKxOJ3G4tdt95HNFWZ3UtDAoxiUmWKy0st1AT40CUmxnd_dhrFZPHvyFdDY8K69s-tpvQgRnHHYjh3yVXMuZtxuCQYtELuN7nZVWCBM0tws-4WuioJcjyV2ZH14MNS0jeTv-8_UqCUy-Gul0BxgbjT6bofbLw0VonnNUa83HTKcVtY3l_FCoyCi7Ja07tPfzHII6GWu4KbJ4f116Zk"/>
+<div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-white">photo_camera</span>
+<span class="text-[10px] text-white font-bold uppercase">Instagram</span>
+</div>
+<div class="absolute bottom-2 right-2 bg-primary px-2 py-1 rounded text-white text-[10px] font-bold">
+                                    3.4% CTR
+                                </div>
+</div>
+<div class="p-4">
+<p class="text-xs text-slate-500 mb-2 font-medium">Posted 2 days ago</p>
+<p class="text-sm font-bold truncate mb-4">Elevate your workflow with Aura AI...</p>
+<div class="flex items-center justify-between text-slate-500">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">favorite</span>
+<span class="text-xs">1.2k</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">chat_bubble</span>
+<span class="text-xs">48</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">share</span>
+<span class="text-xs">210</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Post Card 2 -->
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl overflow-hidden group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Modern workspace with laptop and coffee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCtfI18JUoWHGFuyvn1H5Ub8Ymw_jwqWws8sITGTGyRfgvFyLxi4rKhkH89Tqz_psBb2qN50yi1Kt2pmsTUlnkZiV6diCSqKdMoPhEEnoV7iksm_lDDqGXiVhmmDfVrxDcnbOYDuOKJ2HopS4rRS3yNt9cElcWdrJPwVACNLeE2mm9dnJe589hcJXqck-uE5WsWGWg9JwHCp8Rzlr9sCUvO7cbG3foVWdxcTzPet_Uum_LQfQ2e7p-YMwERm0yZbdCJtOveFvYp8-M"/>
+<div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-white">social_leaderboard</span>
+<span class="text-[10px] text-white font-bold uppercase">Facebook</span>
+</div>
+<div class="absolute bottom-2 right-2 bg-primary px-2 py-1 rounded text-white text-[10px] font-bold">
+                                    2.8% CTR
+                                </div>
+</div>
+<div class="p-4">
+<p class="text-xs text-slate-500 mb-2 font-medium">Posted 4 days ago</p>
+<p class="text-sm font-bold truncate mb-4">Why AI automation is the future...</p>
+<div class="flex items-center justify-between text-slate-500">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">thumb_up</span>
+<span class="text-xs">840</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">chat_bubble</span>
+<span class="text-xs">12</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">share</span>
+<span class="text-xs">142</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Post Card 3 -->
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl overflow-hidden group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="High tech circuit board blue glow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvQKLGBVsOQUy50udlUxHSrIxk50CSCVzSKyZ3vHnaGlmGi3LgGK7dzYesN4QVOVa8Gh0-Rie60chhqwlJnqTTjzjPUzw3WJ_mSsG9rftOQeMSFg7jqd51imcj5MS9Mp_QjBcjAI0ew6zkg--RhHg4_JUcPjtKzsTcNLcAtprGLa0ExKGd-d-HJ2tvPJ9D9_Ov-bFSbBIWZaj5GF9J4b3poNlcU0yOv5SvNC12lyRzPUUHEmGQ8xYrAx6eMU8nhEYCALc_O_EgMp0"/>
+<div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-white">play_circle</span>
+<span class="text-[10px] text-white font-bold uppercase">YouTube</span>
+</div>
+<div class="absolute bottom-2 right-2 bg-primary px-2 py-1 rounded text-white text-[10px] font-bold">
+                                    8.5% CTR
+                                </div>
+</div>
+<div class="p-4">
+<p class="text-xs text-slate-500 mb-2 font-medium">Posted 1 week ago</p>
+<p class="text-sm font-bold truncate mb-4">10 Marketing Hacks with Aura...</p>
+<div class="flex items-center justify-between text-slate-500">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">visibility</span>
+<span class="text-xs">24k</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">chat_bubble</span>
+<span class="text-xs">432</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">share</span>
+<span class="text-xs">95</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Post Card 4 -->
+<div class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-xl overflow-hidden group">
+<div class="relative h-48 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Minimalist abstract purple geometric background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMOTvEmxG2PJ-YCDmee4OPiKf_LvZj2JxsMegLLg1-0RwKxj2qyNGGVqh-gO3FR6NtEbAd0B13brxhwjR4cCqPgUy9JDfMPyInaN7V_f24d00AOtj4oyIvY64XJUbHglkhaRjByuhret3MpdW6URNAL9TQz_7arvnBTfHKIxFsjqKlFbvXVSkAeSoDQ5BjpwwPeFzPE9D88ayGguJEjTdL72aopEtPQ6U__eIF9LMAT-2vatORX-2Bccnzp8ZOrAVx_bS7oykZrtE"/>
+<div class="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-white">photo_camera</span>
+<span class="text-[10px] text-white font-bold uppercase">Instagram</span>
+</div>
+<div class="absolute bottom-2 right-2 bg-primary px-2 py-1 rounded text-white text-[10px] font-bold">
+                                    4.1% CTR
+                                </div>
+</div>
+<div class="p-4">
+<p class="text-xs text-slate-500 mb-2 font-medium">Posted 1 week ago</p>
+<p class="text-sm font-bold truncate mb-4">The Secret to Viral AI Content...</p>
+<div class="flex items-center justify-between text-slate-500">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">favorite</span>
+<span class="text-xs">2.1k</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">chat_bubble</span>
+<span class="text-xs">86</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">share</span>
+<span class="text-xs">342</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Footer for space -->
+<footer class="h-20"></footer>
+</main>
+</div>
+</body></html>

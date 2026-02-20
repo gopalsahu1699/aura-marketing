@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="300" viewBox="0 0 800 300" preserveAspectRatio="none">
+    <defs>
+        <linearGradient id="gradient-area" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#8c2bee" stop-opacity="0.3"></stop>
+            <stop offset="100%" stop-color="#8c2bee" stop-opacity="0"></stop>
+        </linearGradient>
+    </defs>
+    <line stroke="rgba(140, 43, 238, 0.05)" stroke-width="1" x1="0" x2="800" y1="50" y2="50"></line>
+    <line stroke="rgba(140, 43, 238, 0.05)" stroke-width="1" x1="0" x2="800" y1="150" y2="150"></line>
+    <line stroke="rgba(140, 43, 238, 0.05)" stroke-width="1" x1="0" x2="800" y1="250" y2="250"></line>
+    <path d="M0,250 L100,220 L200,240 L300,180 L400,190 L500,130 L500,300 L0,300 Z" fill="url(#gradient-area)"></path>
+    <path d="M0,250 L100,220 L200,240 L300,180 L400,190 L500,130" fill="none" stroke="#8c2bee" stroke-linecap="round" stroke-width="3"></path>
+    <path d="M500,130 L600,100 L700,40 L800,20" fill="none" stroke="#8c2bee" stroke-dasharray="8,8" stroke-linecap="round" stroke-width="3"></path>
+    <circle cx="500" cy="130" fill="#8c2bee" r="6"></circle>
+</svg>
