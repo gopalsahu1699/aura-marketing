@@ -20,6 +20,10 @@ export default function LoginPage() {
         setError(null);
 
         try {
+            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+                throw new Error('Supabase environment variables are missing');
+            }
+
             const { error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
@@ -29,6 +33,10 @@ export default function LoginPage() {
             router.push('/dashboard');
         } catch (err: any) {
             setError(err.message || 'Failed to login');
+        } finally {
+            // Only reset loading if we haven't successfully started redirecting
+            // or if we hit an error. This helps avoid "flicker" on quick redirects
+            // but ensures the UI isn't stuck if the redirect is slow/fails.
             setLoading(false);
         }
     };

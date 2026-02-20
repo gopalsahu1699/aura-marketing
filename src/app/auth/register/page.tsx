@@ -20,6 +20,10 @@ export default function RegisterPage() {
         setError(null);
 
         try {
+            if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+                throw new Error('Supabase environment variables are missing');
+            }
+
             const { error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -28,10 +32,16 @@ export default function RegisterPage() {
                 },
             });
 
-            if (error) throw error;
+            if (error) {
+                if (error.message.includes('rate limit')) {
+                    throw new Error('Email rate limit reached. Please try again in an hour or contact support.');
+                }
+                throw error;
+            }
             router.push('/auth/login?message=Check your email to confirm your account');
         } catch (err: any) {
             setError(err.message || 'Failed to register');
+        } finally {
             setLoading(false);
         }
     };
