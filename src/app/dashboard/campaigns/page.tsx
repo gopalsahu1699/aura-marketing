@@ -7,7 +7,9 @@ import {
     Clock, PlayCircle, PauseCircle, Loader2, Zap, Globe, Brain
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getCampaignsAIData, CampaignsAIData, CampaignItem } from '@/app/actions/ai';
+import { CampaignsAIData, CampaignItem } from '@/app/actions/ai';
+import { getRealCampaignsData } from '@/app/actions/analytics';
+import { createBrowserClient } from '@supabase/ssr';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     active: { label: "Active", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: <PlayCircle size={12} /> },
@@ -16,8 +18,6 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
     completed: { label: "Completed", color: "bg-slate-500/10 text-slate-400 border-slate-500/20", icon: <CheckCircle2 size={12} /> },
 };
 
-const CACHE_KEY = 'aura_campaigns_data';
-const CACHE_TTL = 10 * 60 * 1000;
 
 export default function CampaignsPage() {
     const [search, setSearch] = useState('');
@@ -30,18 +30,16 @@ export default function CampaignsPage() {
         const load = async () => {
             setLoadingAI(true);
             try {
-                const cached = sessionStorage.getItem(CACHE_KEY);
-                if (cached) {
-                    const { data, ts } = JSON.parse(cached);
-                    if (Date.now() - ts < CACHE_TTL) {
-                        setAiData(data);
-                        setLoadingAI(false);
-                        return;
-                    }
-                }
-                const result = await getCampaignsAIData();
+                // Get user
+                const supabase = createBrowserClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const result = await getRealCampaignsData(user.id);
                 setAiData(result.data);
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: result.data, ts: Date.now() }));
             } catch (err) {
                 console.warn('Campaigns AI fetch failed', err);
             } finally {

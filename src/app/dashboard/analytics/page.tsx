@@ -14,7 +14,9 @@ import {
     Tag, FileText, Video, Users2, Percent, Package,
     CircleDot, Crown, Crosshair, Brain, Lightbulb, Activity
 } from 'lucide-react';
-import { generateChatContent, getAnalyticsAIData, AnalyticsAIData } from '@/app/actions/ai';
+import { generateChatContent, AnalyticsAIData } from '@/app/actions/ai';
+import { getRealAnalyticsData } from '@/app/actions/analytics';
+import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from 'next/navigation';
 
 
@@ -51,25 +53,21 @@ export default function AnalyticsReportingPage() {
     };
 
     useEffect(() => {
-        const CACHE_KEY = 'aura_analytics_data';
-        const CACHE_TTL = 10 * 60 * 1000;
+
         const loadData = async () => {
             setLoadingAI(true);
             try {
-                const cached = sessionStorage.getItem(CACHE_KEY);
-                if (cached) {
-                    const { data, ts } = JSON.parse(cached);
-                    if (Date.now() - ts < CACHE_TTL) {
-                        setAiData(data);
-                        setAiSentiment(data.sentiment_insight);
-                        setLoadingAI(false);
-                        return;
-                    }
-                }
-                const result = await getAnalyticsAIData();
+                // Get user
+                const supabase = createBrowserClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const result = await getRealAnalyticsData(user.id);
                 setAiData(result.data);
                 setAiSentiment(result.data.sentiment_insight);
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: result.data, ts: Date.now() }));
             } catch (err) {
                 console.warn('Analytics AI fetch failed', err);
             } finally {
@@ -82,13 +80,25 @@ export default function AnalyticsReportingPage() {
     // Re-fetch when time range changes
     useEffect(() => {
         if (!loadingAI) {
-            sessionStorage.removeItem('aura_analytics_data');
+
             setLoadingAI(true);
-            getAnalyticsAIData().then(r => {
-                setAiData(r.data);
-                setAiSentiment(r.data.sentiment_insight);
-                sessionStorage.setItem('aura_analytics_data', JSON.stringify({ data: r.data, ts: Date.now() }));
-            }).finally(() => setLoadingAI(false));
+
+            // Need user for refetch
+            const supabase = createBrowserClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+            );
+            supabase.auth.getUser().then(({ data: { user } }) => {
+                if (user) {
+                    getRealAnalyticsData(user.id).then(r => {
+                        setAiData(r.data);
+                        setAiSentiment(r.data.sentiment_insight);
+
+                    }).finally(() => setLoadingAI(false));
+                } else {
+                    setLoadingAI(false);
+                }
+            });
         }
     }, [timeRange]);
 
@@ -440,10 +450,7 @@ export default function AnalyticsReportingPage() {
                                         <MapPin size={16} className="text-primary" />
                                     </div>
                                     <div className="space-y-5">
-                                        {(ai?.audienceStats.locations ?? [
-                                            { city: "Mumbai, India", val: 38 }, { city: "New York, USA", val: 24 },
-                                            { city: "London, UK", val: 18 }, { city: "Dubai, UAE", val: 12 }, { city: "Sydney, AU", val: 8 },
-                                        ]).map(c => (
+                                        {(ai?.audienceStats.locations ?? []).map(c => (
                                             <div key={c.city}>
                                                 <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
                                                     <span>{c.city}</span>
@@ -466,11 +473,7 @@ export default function AnalyticsReportingPage() {
                                             <span className="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded uppercase backdrop-blur-md">AI Detected</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2 mb-8">
-                                            {(ai?.audienceStats.languages ?? [
-                                                { lang: 'English', pct: '89%' }, { lang: 'Hindi', pct: '42%' },
-                                                { lang: 'Spanish', pct: '18%' }, { lang: 'Arabic', pct: '12%' },
-                                                { lang: 'French', pct: '8%' }, { lang: 'German', pct: '5%' },
-                                            ]).map(l => (
+                                            {(ai?.audienceStats.languages ?? []).map(l => (
                                                 <div key={l.lang} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-default flex items-center gap-2">
                                                     <span>{l.lang}</span>
                                                     <span className="text-white/60">{l.pct}</span>
@@ -493,12 +496,7 @@ export default function AnalyticsReportingPage() {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {/* Behavior Stat Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {[
-                                    { label: "Peak Buy Time", value: "8–10 PM", change: "Weekdays", icon: <Clock size={20} /> },
-                                    { label: "Avg Frequency", value: "2.4x/mo", change: "+0.3", icon: <RotateCcw size={20} /> },
-                                    { label: "Cart Abandonment", value: "67.2%", change: "-3.1%", icon: <ShoppingCart size={20} /> },
-                                    { label: "Repeat Purchase", value: "34.8%", change: "+5.2%", icon: <UserCheck size={20} /> },
-                                ].map((stat, i) => (
+                                {([] as any[]).map((stat, i) => (
                                     <div key={i} className="bg-primary/5 border border-primary/10 p-6 rounded-[2rem] shadow-sm hover:border-primary/30 transition-all group">
                                         <div className="flex justify-between items-start mb-5">
                                             <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">{stat.icon}</div>
@@ -523,14 +521,7 @@ export default function AnalyticsReportingPage() {
                                         <MousePointerClick size={16} className="text-primary" />
                                     </div>
                                     <div className="space-y-4">
-                                        {[
-                                            { page: "Homepage", visitors: "10,000", pct: 100 },
-                                            { page: "Product Listing", visitors: "6,800", pct: 68 },
-                                            { page: "Product Detail", visitors: "4,200", pct: 42 },
-                                            { page: "Add to Cart", visitors: "2,100", pct: 21 },
-                                            { page: "Checkout", visitors: "1,050", pct: 10.5 },
-                                            { page: "Purchase Complete", visitors: "690", pct: 6.9 },
-                                        ].map((step, i) => (
+                                        {([] as any[]).map((step, i) => (
                                             <div key={step.page} className="group">
                                                 <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
                                                     <span className="text-slate-300 flex items-center gap-2">
@@ -570,15 +561,7 @@ export default function AnalyticsReportingPage() {
                                             ))}
                                         </div>
                                         {/* Heatmap rows */}
-                                        {[
-                                            { day: 'Monday', vals: [15, 25, 40, 35, 55, 80] },
-                                            { day: 'Tuesday', vals: [12, 30, 45, 38, 60, 75] },
-                                            { day: 'Wednesday', vals: [18, 28, 50, 42, 65, 85] },
-                                            { day: 'Thursday', vals: [10, 22, 35, 30, 50, 70] },
-                                            { day: 'Friday', vals: [20, 35, 55, 48, 70, 90] },
-                                            { day: 'Saturday', vals: [30, 45, 60, 55, 75, 95] },
-                                            { day: 'Sunday', vals: [25, 40, 50, 45, 65, 88] },
-                                        ].map(row => (
+                                        {([] as { day: string, vals: number[] }[]).map(row => (
                                             <div key={row.day} className="flex items-center gap-1">
                                                 <span className="w-16 text-[9px] font-black text-slate-500 uppercase tracking-widest text-right pr-2 shrink-0">{row.day.slice(0, 3)}</span>
                                                 {row.vals.map((v, vi) => (
@@ -621,13 +604,7 @@ export default function AnalyticsReportingPage() {
                                         <Search size={16} className="text-primary" />
                                     </div>
                                     <div className="space-y-4">
-                                        {[
-                                            { query: "How to cancel subscription", count: "2.4k", trend: "up" },
-                                            { query: "Product not working", count: "1.8k", trend: "up" },
-                                            { query: "Refund policy", count: "1.2k", trend: "down" },
-                                            { query: "Shipping delays", count: "980", trend: "up" },
-                                            { query: "Size guide accuracy", count: "750", trend: "down" },
-                                        ].map((item, i) => (
+                                        {([] as any[]).map((item, i) => (
                                             <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-all group cursor-default">
                                                 <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary text-[10px] font-black">
                                                     #{i + 1}
@@ -662,11 +639,7 @@ export default function AnalyticsReportingPage() {
                                             </div>
                                         </div>
                                         <div className="flex justify-between">
-                                            {[
-                                                { label: 'Positive', val: '62%', color: 'text-emerald-500' },
-                                                { label: 'Neutral', val: '23%', color: 'text-amber-500' },
-                                                { label: 'Negative', val: '15%', color: 'text-red-500' },
-                                            ].map(s => (
+                                            {([] as any[]).map(s => (
                                                 <div key={s.label} className="text-center">
                                                     <p className={`text-lg font-black italic ${s.color}`}>{s.val}</p>
                                                     <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{s.label}</p>
@@ -676,11 +649,7 @@ export default function AnalyticsReportingPage() {
 
                                         <div className="border-t border-primary/10 pt-5 space-y-3">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Top Negative Themes</p>
-                                            {[
-                                                { theme: "Slow customer support", mentions: 128 },
-                                                { theme: "Product quality inconsistency", mentions: 94 },
-                                                { theme: "Confusing checkout flow", mentions: 76 },
-                                            ].map(t => (
+                                            {([] as any[]).map(t => (
                                                 <div key={t.theme} className="flex items-center justify-between p-3 rounded-xl bg-red-500/5 border border-red-500/10">
                                                     <span className="text-[11px] font-bold text-slate-300">{t.theme}</span>
                                                     <span className="text-[9px] font-black text-red-400">{t.mentions} mentions</span>
@@ -699,12 +668,7 @@ export default function AnalyticsReportingPage() {
                                             <HelpCircle size={16} className="text-primary" />
                                         </div>
                                         <div className="space-y-4">
-                                            {[
-                                                { topic: "Returns & Refunds", sentiment: 35, negative: true },
-                                                { topic: "Shipping Info", sentiment: 72, negative: false },
-                                                { topic: "Payment Options", sentiment: 85, negative: false },
-                                                { topic: "Account Issues", sentiment: 28, negative: true },
-                                            ].map(faq => (
+                                            {([] as any[]).map(faq => (
                                                 <div key={faq.topic}>
                                                     <div className="flex justify-between text-[10px] font-black uppercase tracking-widest mb-2">
                                                         <span className="text-slate-300">{faq.topic}</span>
@@ -758,12 +722,7 @@ export default function AnalyticsReportingPage() {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {/* Search Demand Trends */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {[
-                                    { label: "Avg Monthly Volume", value: "142k", change: "+18.3%", icon: <Search size={20} /> },
-                                    { label: "Rising Keywords", value: "47", change: "+12", icon: <ArrowUpRight size={20} /> },
-                                    { label: "Seasonal Peak", value: "Nov-Dec", change: "Holiday", icon: <Flame size={20} /> },
-                                    { label: "Top Region", value: "India", change: "38%", icon: <Globe size={20} /> },
-                                ].map((stat, i) => (
+                                {([] as any[]).map((stat, i) => (
                                     <div key={i} className="bg-primary/5 border border-primary/10 p-6 rounded-[2rem] shadow-sm hover:border-primary/30 transition-all group">
                                         <div className="flex justify-between items-start mb-5">
                                             <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">{stat.icon}</div>
@@ -786,12 +745,7 @@ export default function AnalyticsReportingPage() {
                                         <BarChart3 size={16} className="text-primary" />
                                     </div>
                                     <div className="h-56 flex items-end gap-2 px-1">
-                                        {[
-                                            { month: 'Jan', vol: 45 }, { month: 'Feb', vol: 42 }, { month: 'Mar', vol: 55 },
-                                            { month: 'Apr', vol: 60 }, { month: 'May', vol: 52 }, { month: 'Jun', vol: 48 },
-                                            { month: 'Jul', vol: 58 }, { month: 'Aug', vol: 65 }, { month: 'Sep', vol: 72 },
-                                            { month: 'Oct', vol: 80 }, { month: 'Nov', vol: 95 }, { month: 'Dec', vol: 88 },
-                                        ].map((m, i) => (
+                                        {([] as any[]).map((m, i) => (
                                             <div key={m.month} className="flex-1 flex flex-col items-center gap-2 group cursor-default">
                                                 <div className="relative w-full flex-1 flex items-end">
                                                     <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
@@ -818,14 +772,7 @@ export default function AnalyticsReportingPage() {
                                             <span className="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded uppercase backdrop-blur-md">Trending</span>
                                         </div>
                                         <div className="space-y-3">
-                                            {[
-                                                { keyword: "AI marketing tools", growth: "+320%", vol: "18.2k" },
-                                                { keyword: "social media automation", growth: "+185%", vol: "14.8k" },
-                                                { keyword: "content creator platform", growth: "+142%", vol: "12.1k" },
-                                                { keyword: "brand analytics dashboard", growth: "+98%", vol: "8.4k" },
-                                                { keyword: "influencer ROI tracker", growth: "+76%", vol: "5.2k" },
-                                                { keyword: "automated ad campaigns", growth: "+64%", vol: "4.9k" },
-                                            ].map((kw, i) => (
+                                            {([] as any[]).map((kw, i) => (
                                                 <div key={i} className="flex items-center gap-3 p-3 bg-white/10 hover:bg-white/15 rounded-xl transition-all cursor-default">
                                                     <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center text-[9px] font-black">{i + 1}</div>
                                                     <div className="flex-1 min-w-0">
@@ -852,13 +799,7 @@ export default function AnalyticsReportingPage() {
                                         <Calendar size={16} className="text-primary" />
                                     </div>
                                     <div className="space-y-4">
-                                        {[
-                                            { month: "November", score: 95, icon: <Leaf size={14} className="text-orange-400" />, label: "Holiday Prep" },
-                                            { month: "December", score: 88, icon: <Snowflake size={14} className="text-blue-400" />, label: "Peak Season" },
-                                            { month: "October", score: 80, icon: <Leaf size={14} className="text-amber-500" />, label: "Pre-Holiday" },
-                                            { month: "March", score: 72, icon: <Sun size={14} className="text-yellow-400" />, label: "Spring Push" },
-                                            { month: "September", score: 65, icon: <CloudRain size={14} className="text-slate-400" />, label: "Back-to-School" },
-                                        ].map(m => (
+                                        {([] as any[]).map(m => (
                                             <div key={m.month} className="group">
                                                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest mb-2">
                                                     <span className="text-slate-300 flex items-center gap-2">
@@ -899,10 +840,7 @@ export default function AnalyticsReportingPage() {
 
                                     {/* Day breakdown */}
                                     <div className="space-y-3 mb-6">
-                                        {[
-                                            { day: 'Mon', val: 52 }, { day: 'Tue', val: 48 }, { day: 'Wed', val: 60 },
-                                            { day: 'Thu', val: 65 }, { day: 'Fri', val: 92 }, { day: 'Sat', val: 78 }, { day: 'Sun', val: 55 },
-                                        ].map(d => (
+                                        {([] as any[]).map(d => (
                                             <div key={d.day} className="flex items-center gap-3">
                                                 <span className="w-8 text-[9px] font-black text-slate-500 uppercase tracking-widest">{d.day}</span>
                                                 <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
@@ -937,14 +875,7 @@ export default function AnalyticsReportingPage() {
                                         <MapPin size={16} className="text-primary" />
                                     </div>
                                     <div className="space-y-5">
-                                        {[
-                                            { region: "India", volume: "54k", pct: 38, flag: "🇮🇳" },
-                                            { region: "United States", volume: "38k", pct: 27, flag: "🇺🇸" },
-                                            { region: "United Kingdom", volume: "21k", pct: 15, flag: "🇬🇧" },
-                                            { region: "UAE", volume: "14k", pct: 10, flag: "🇦🇪" },
-                                            { region: "Australia", volume: "8k", pct: 6, flag: "🇦🇺" },
-                                            { region: "Others", volume: "7k", pct: 4, flag: "🌍" },
-                                        ].map(r => (
+                                        {([] as any[]).map(r => (
                                             <div key={r.region}>
                                                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest mb-2">
                                                     <span className="text-slate-300 flex items-center gap-2">
@@ -971,12 +902,7 @@ export default function AnalyticsReportingPage() {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {/* Stat Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {[
-                                    { label: "High-Demand Cities", value: "24", change: "+6 new", icon: <Building2 size={20} /> },
-                                    { label: "Low-Competition Zones", value: "12", change: "Opportunity", icon: <Crosshair size={20} /> },
-                                    { label: "Avg Price Variation", value: "±18%", change: "Regional", icon: <DollarSign size={20} /> },
-                                    { label: "Competitor Density", value: "3.2/km²", change: "Medium", icon: <Users size={20} /> },
-                                ].map((stat, i) => (
+                                {([] as any[]).map((stat, i) => (
                                     <div key={i} className="bg-primary/5 border border-primary/10 p-6 rounded-[2rem] shadow-sm hover:border-primary/30 transition-all group">
                                         <div className="flex justify-between items-start mb-5">
                                             <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">{stat.icon}</div>
@@ -999,14 +925,7 @@ export default function AnalyticsReportingPage() {
                                         <Building2 size={16} className="text-primary" />
                                     </div>
                                     <div className="space-y-4">
-                                        {[
-                                            { city: "Mumbai", demand: 94, revenue: "$124k", growth: "+22%" },
-                                            { city: "Delhi NCR", demand: 88, revenue: "$98k", growth: "+18%" },
-                                            { city: "Bangalore", demand: 82, revenue: "$87k", growth: "+31%" },
-                                            { city: "New York", demand: 78, revenue: "$76k", growth: "+12%" },
-                                            { city: "London", demand: 72, revenue: "$65k", growth: "+9%" },
-                                            { city: "Dubai", demand: 68, revenue: "$58k", growth: "+24%" },
-                                        ].map(c => (
+                                        {([] as any[]).map(c => (
                                             <div key={c.city} className="group">
                                                 <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest mb-2">
                                                     <span className="text-slate-300">{c.city}</span>
@@ -1032,14 +951,7 @@ export default function AnalyticsReportingPage() {
                                             <span className="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded uppercase backdrop-blur-md">Opportunity</span>
                                         </div>
                                         <div className="space-y-3">
-                                            {[
-                                                { region: "Jaipur, India", competitors: 2, potential: "High", score: 92 },
-                                                { region: "Pune, India", competitors: 4, potential: "High", score: 88 },
-                                                { region: "Austin, USA", competitors: 3, potential: "Medium", score: 78 },
-                                                { region: "Manchester, UK", competitors: 5, potential: "Medium", score: 72 },
-                                                { region: "Sharjah, UAE", competitors: 1, potential: "Very High", score: 95 },
-                                                { region: "Brisbane, AU", competitors: 3, potential: "Medium", score: 74 },
-                                            ].map((r, i) => (
+                                            {([] as any[]).map((r, i) => (
                                                 <div key={i} className="flex items-center gap-3 p-3 bg-white/10 hover:bg-white/15 rounded-xl transition-all cursor-default">
                                                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black ${r.score >= 90 ? 'bg-emerald-500/30 text-emerald-300' : 'bg-white/20'}`}>
                                                         {r.score}
@@ -1066,11 +978,7 @@ export default function AnalyticsReportingPage() {
                                             <Tag size={16} className="text-primary" />
                                         </div>
                                         <div className="space-y-4">
-                                            {[
-                                                { region: "Tier 1 Cities", avg: "$89", range: "$75–$120", idx: 112 },
-                                                { region: "Tier 2 Cities", avg: "$62", range: "$48–$78", idx: 88 },
-                                                { region: "International", avg: "$95", range: "$80–$140", idx: 124 },
-                                            ].map(p => (
+                                            {([] as any[]).map(p => (
                                                 <div key={p.region} className="p-4 bg-white/5 rounded-2xl border border-primary/10">
                                                     <div className="flex justify-between items-center mb-2">
                                                         <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">{p.region}</span>
@@ -1092,12 +1000,7 @@ export default function AnalyticsReportingPage() {
                                             <Users size={16} className="text-primary" />
                                         </div>
                                         <div className="space-y-3">
-                                            {[
-                                                { zone: "Metro Core", density: "High", count: 28, color: "text-red-400 bg-red-500/10" },
-                                                { zone: "Suburban Ring", density: "Medium", count: 12, color: "text-amber-400 bg-amber-500/10" },
-                                                { zone: "Semi-Urban", density: "Low", count: 5, color: "text-emerald-400 bg-emerald-500/10" },
-                                                { zone: "Rural", density: "Very Low", count: 1, color: "text-blue-400 bg-blue-500/10" },
-                                            ].map(z => (
+                                            {([] as any[]).map(z => (
                                                 <div key={z.zone} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
                                                     <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{z.zone}</span>
                                                     <div className="flex items-center gap-3">
@@ -1118,12 +1021,7 @@ export default function AnalyticsReportingPage() {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {/* Competitor Overview Stats */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {[
-                                    { label: "Tracked Competitors", value: "18", change: "Active", icon: <Shield size={20} /> },
-                                    { label: "Active Ad Campaigns", value: "142", change: "+23 new", icon: <Megaphone size={20} /> },
-                                    { label: "Avg Market Price", value: "$84.50", change: "+3.2%", icon: <DollarSign size={20} /> },
-                                    { label: "Content Gap Score", value: "72%", change: "Opportunity", icon: <Target size={20} /> },
-                                ].map((stat, i) => (
+                                {([] as any[]).map((stat, i) => (
                                     <div key={i} className="bg-primary/5 border border-primary/10 p-6 rounded-[2rem] shadow-sm hover:border-primary/30 transition-all group">
                                         <div className="flex justify-between items-start mb-5">
                                             <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">{stat.icon}</div>
@@ -1143,12 +1041,7 @@ export default function AnalyticsReportingPage() {
                                         <span className="bg-orange-500/10 text-orange-500 text-[9px] font-black px-2 py-0.5 rounded uppercase">Live</span>
                                     </div>
                                     <div className="space-y-4">
-                                        {[
-                                            { brand: "CompetitorX", platform: "Meta Ads", headline: "50% Off Summer Collection", cta: "Shop Now", spend: "$12k/mo" },
-                                            { brand: "RivalBrand", platform: "Google Ads", headline: "Free Shipping on All Orders", cta: "Order Today", spend: "$8.5k/mo" },
-                                            { brand: "MarketLeader", platform: "Meta Ads", headline: "New Arrivals — Limited Stock", cta: "Browse Now", spend: "$22k/mo" },
-                                            { brand: "UpstartCo", platform: "Google Ads", headline: "AI-Powered Marketing Suite", cta: "Start Free", spend: "$5k/mo" },
-                                        ].map((ad, i) => (
+                                        {([] as any[]).map((ad, i) => (
                                             <div key={i} className="p-4 bg-white/5 rounded-2xl border border-primary/10 hover:border-primary/25 transition-all group cursor-default">
                                                 <div className="flex justify-between items-center mb-2">
                                                     <span className="text-[10px] font-black text-primary uppercase tracking-widest">{ad.brand}</span>
@@ -1178,7 +1071,7 @@ export default function AnalyticsReportingPage() {
                                         <div>
                                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2"><FileText size={12} /> Top Blog Topics</p>
                                             <div className="flex flex-wrap gap-1.5">
-                                                {['AI Marketing', 'Growth Hacks', 'Social ROI', 'Email Tips', 'Video Strategy', 'SEO Trends'].map(t => (
+                                                {([] as string[]).map(t => (
                                                     <span key={t} className="px-2.5 py-1 bg-white/5 border border-primary/10 rounded-lg text-[9px] font-black text-slate-300 uppercase tracking-wider">{t}</span>
                                                 ))}
                                             </div>
@@ -1188,12 +1081,7 @@ export default function AnalyticsReportingPage() {
                                         <div>
                                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2"><Hash size={12} /> Posting Frequency</p>
                                             <div className="space-y-3">
-                                                {[
-                                                    { brand: "CompetitorX", posts: "4.2/week", pct: 84 },
-                                                    { brand: "RivalBrand", posts: "6.1/week", pct: 95 },
-                                                    { brand: "MarketLeader", posts: "3.5/week", pct: 70 },
-                                                    { brand: "You (Aura)", posts: "2.8/week", pct: 56 },
-                                                ].map(b => (
+                                                {([] as any[]).map(b => (
                                                     <div key={b.brand}>
                                                         <div className="flex justify-between text-[9px] font-black uppercase tracking-widest mb-1">
                                                             <span className={b.brand.includes('Aura') ? 'text-primary' : 'text-slate-400'}>{b.brand}</span>
@@ -1211,12 +1099,7 @@ export default function AnalyticsReportingPage() {
                                         <div>
                                             <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2"><Video size={12} /> Video Engagement</p>
                                             <div className="grid grid-cols-2 gap-3">
-                                                {[
-                                                    { brand: "CompetitorX", rate: "4.8%" },
-                                                    { brand: "RivalBrand", rate: "6.2%" },
-                                                    { brand: "MarketLeader", rate: "3.1%" },
-                                                    { brand: "You (Aura)", rate: "5.4%" },
-                                                ].map(v => (
+                                                {([] as any[]).map(v => (
                                                     <div key={v.brand} className={`p-3 rounded-xl text-center ${v.brand.includes('Aura') ? 'bg-primary/20 border border-primary/30' : 'bg-white/5'}`}>
                                                         <p className="text-lg font-black italic text-white">{v.rate}</p>
                                                         <p className={`text-[8px] font-black uppercase tracking-widest ${v.brand.includes('Aura') ? 'text-primary' : 'text-slate-500'}`}>{v.brand}</p>
@@ -1247,12 +1130,7 @@ export default function AnalyticsReportingPage() {
                                             </div>
 
                                             <div className="space-y-3">
-                                                {[
-                                                    { brand: "MarketLeader", price: "$110", position: "Premium" },
-                                                    { brand: "CompetitorX", price: "$85", position: "Mid-Range" },
-                                                    { brand: "RivalBrand", price: "$72", position: "Budget" },
-                                                    { brand: "UpstartCo", price: "$65", position: "Discount" },
-                                                ].map(p => (
+                                                {([] as any[]).map(p => (
                                                     <div key={p.brand} className="flex items-center justify-between p-2.5 bg-white/10 rounded-xl">
                                                         <span className="text-[10px] font-bold">{p.brand}</span>
                                                         <div className="flex items-center gap-3">
@@ -1272,12 +1150,7 @@ export default function AnalyticsReportingPage() {
                                             <Percent size={16} className="text-primary" />
                                         </div>
                                         <div className="space-y-3">
-                                            {[
-                                                { type: "Flash Sales", freq: "Weekly", avg: "15–25%", trend: "up" },
-                                                { type: "Bundle Offers", freq: "Monthly", avg: "20–30%", trend: "up" },
-                                                { type: "Seasonal Sales", freq: "Quarterly", avg: "30–50%", trend: "down" },
-                                                { type: "Loyalty Rewards", freq: "Ongoing", avg: "5–10%", trend: "up" },
-                                            ].map(d => (
+                                            {([] as any[]).map(d => (
                                                 <div key={d.type} className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all">
                                                     <div>
                                                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{d.type}</p>
@@ -1298,12 +1171,7 @@ export default function AnalyticsReportingPage() {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {/* Hero Predictive Stats */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {[
-                                    { label: "Demand Forecast", value: "+34%", sub: "Next 30 days", icon: <TrendingUp size={20} />, accent: "emerald" },
-                                    { label: "Revenue Prediction", value: "$68.2k", sub: "Next quarter", icon: <DollarSign size={20} />, accent: "primary" },
-                                    { label: "Churn Risk", value: "8.4%", sub: "-1.2% predicted", icon: <Activity size={20} />, accent: "orange" },
-                                    { label: "AI Confidence", value: "94%", sub: "Model accuracy", icon: <Brain size={20} />, accent: "primary" },
-                                ].map((stat, i) => (
+                                {([] as any[]).map((stat, i) => (
                                     <div key={i} className={`${i === 3 ? 'bg-primary text-white' : 'bg-primary/5 text-white'} border border-primary/10 p-6 rounded-[2rem] shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden`}>
                                         {i === 3 && <Sparkles className="absolute -right-4 -top-4 w-20 h-20 text-white/10" />}
                                         <div className="flex justify-between items-start mb-5 relative z-10">
@@ -1336,14 +1204,7 @@ export default function AnalyticsReportingPage() {
                                         </div>
                                     </div>
                                     <div className="h-56 flex items-end gap-2 px-1">
-                                        {[
-                                            { month: 'Jan', actual: 48, predicted: null },
-                                            { month: 'Feb', actual: 52, predicted: null },
-                                            { month: 'Mar', actual: 58, predicted: null },
-                                            { month: 'Apr', actual: null, predicted: 65 },
-                                            { month: 'May', actual: null, predicted: 74 },
-                                            { month: 'Jun', actual: null, predicted: 82 },
-                                        ].map((m) => (
+                                        {([] as any[]).map((m) => (
                                             <div key={m.month} className="flex-1 flex flex-col items-center gap-2 group cursor-default">
                                                 <div className="relative w-full flex-1 flex items-end">
                                                     <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
@@ -1377,11 +1238,7 @@ export default function AnalyticsReportingPage() {
                                                 <span className="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded uppercase backdrop-blur-md">AI</span>
                                             </div>
                                             <div className="space-y-4">
-                                                {[
-                                                    { period: "This Month", predicted: "$22.4k", confidence: "96%", trend: "up" },
-                                                    { period: "Next Month", predicted: "$28.1k", confidence: "91%", trend: "up" },
-                                                    { period: "Q2 Total", predicted: "$68.2k", confidence: "87%", trend: "up" },
-                                                ].map(r => (
+                                                {([] as any[]).map(r => (
                                                     <div key={r.period} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4">
                                                         <div className="flex justify-between items-center mb-1">
                                                             <span className="text-[9px] font-black uppercase tracking-widest text-white/60">{r.period}</span>
@@ -1416,11 +1273,7 @@ export default function AnalyticsReportingPage() {
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            {[
-                                                { segment: "Inactive 30d+", risk: "High", count: 342, color: "text-red-400 bg-red-500/10" },
-                                                { segment: "Declining engagement", risk: "Medium", count: 218, color: "text-amber-400 bg-amber-500/10" },
-                                                { segment: "Price-sensitive", risk: "Low", count: 156, color: "text-emerald-400 bg-emerald-500/10" },
-                                            ].map(s => (
+                                            {([] as any[]).map(s => (
                                                 <div key={s.segment} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
                                                     <span className="text-[10px] font-bold text-slate-300">{s.segment}</span>
                                                     <div className="flex items-center gap-3">
@@ -1443,13 +1296,7 @@ export default function AnalyticsReportingPage() {
                                         <span className="bg-primary/10 text-primary text-[9px] font-black px-2 py-0.5 rounded uppercase">AI Ranked</span>
                                     </div>
                                     <div className="space-y-4">
-                                        {[
-                                            { type: "Short-form Video (Reels)", score: 94, prediction: "Highest engagement expected", roi: "+340% ROI", rank: 1 },
-                                            { type: "Carousel Posts", score: 87, prediction: "Strong for product showcases", roi: "+280% ROI", rank: 2 },
-                                            { type: "User-Generated Content", score: 82, prediction: "Trust-building; high conversions", roi: "+220% ROI", rank: 3 },
-                                            { type: "Story Polls & Quizzes", score: 76, prediction: "Great for engagement, low cost", roi: "+180% ROI", rank: 4 },
-                                            { type: "Static Image Ads", score: 58, prediction: "Declining performance predicted", roi: "+90% ROI", rank: 5 },
-                                        ].map(c => (
+                                        {([] as any[]).map(c => (
                                             <div key={c.type} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-all group cursor-default">
                                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 ${c.rank === 1 ? 'bg-primary text-white shadow-lg shadow-primary/30' : c.rank <= 3 ? 'bg-primary/20 text-primary' : 'bg-white/10 text-slate-400'
                                                     }`}>
@@ -1488,12 +1335,7 @@ export default function AnalyticsReportingPage() {
                                             </div>
 
                                             <div className="space-y-3">
-                                                {[
-                                                    { strategy: "Penetration", price: "$65", impact: "High volume, low margin", score: 72 },
-                                                    { strategy: "Competitive", price: "$79", impact: "Market avg, solid growth", score: 88 },
-                                                    { strategy: "Optimal", price: "$82", impact: "Best revenue balance", score: 95 },
-                                                    { strategy: "Premium", price: "$99", impact: "High margin, lower volume", score: 68 },
-                                                ].map(s => (
+                                                {([] as any[]).map(s => (
                                                     <div key={s.strategy} className={`flex items-center justify-between p-3 rounded-xl ${s.score >= 90 ? 'bg-white/20 border border-white/30' : 'bg-white/10'}`}>
                                                         <div>
                                                             <p className="text-[10px] font-black uppercase tracking-widest">{s.strategy}</p>
@@ -1519,12 +1361,7 @@ export default function AnalyticsReportingPage() {
                                             </div>
                                         </div>
                                         <div className="space-y-4">
-                                            {[
-                                                { model: "Demand Forecaster", accuracy: "94.2%", updated: "2h ago", status: "Active" },
-                                                { model: "Revenue Predictor", accuracy: "91.8%", updated: "4h ago", status: "Active" },
-                                                { model: "Churn Detector", accuracy: "89.5%", updated: "1h ago", status: "Active" },
-                                                { model: "Creative Ranker", accuracy: "87.3%", updated: "6h ago", status: "Training" },
-                                            ].map(m => (
+                                            {([] as any[]).map(m => (
                                                 <div key={m.model} className="flex items-center justify-between p-3 rounded-xl bg-white/5">
                                                     <div>
                                                         <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{m.model}</p>

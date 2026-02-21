@@ -11,16 +11,10 @@ export async function seedUserAnalytics() {
 
     const userId = user.id;
 
-    // Check if already seeded
-    const { data: existing } = await supabase
-        .from("dashboard_stats")
-        .select("id")
-        .eq("user_id", userId)
-        .limit(1);
-
-    if (existing && existing.length > 0) {
-        return { success: true, alreadySeeded: true };
-    }
+    // Force overwrite: delete existing stats and series for this user
+    await supabase.from("dashboard_stats").delete().eq("user_id", userId);
+    await supabase.from("analytics_series").delete().eq("user_id", userId);
+    await supabase.from("audience_insights").delete().eq("user_id", userId);
 
     // Seed dashboard stats
     await supabase.from("dashboard_stats").insert([

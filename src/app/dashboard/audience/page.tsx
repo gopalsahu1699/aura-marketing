@@ -9,10 +9,11 @@ import {
     Sparkles, Loader2, Brain
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getAudienceAIData, AudienceAIData } from '@/app/actions/ai';
+import { AudienceAIData } from '@/app/actions/ai';
+import { getRealAudienceData } from '@/app/actions/analytics';
+import { createBrowserClient } from '@supabase/ssr';
 
-const CACHE_KEY = 'aura_audience_data';
-const CACHE_TTL = 10 * 60 * 1000;
+
 
 export default function AudienceInsightsPage() {
     const router = useRouter();
@@ -27,18 +28,16 @@ export default function AudienceInsightsPage() {
         const load = async () => {
             setLoadingAI(true);
             try {
-                const cached = sessionStorage.getItem(CACHE_KEY);
-                if (cached) {
-                    const { data, ts } = JSON.parse(cached);
-                    if (Date.now() - ts < CACHE_TTL) {
-                        setAiData(data);
-                        setLoadingAI(false);
-                        return;
-                    }
-                }
-                const result = await getAudienceAIData();
+                // Get user
+                const supabase = createBrowserClient(
+                    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+                );
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const result = await getRealAudienceData(user.id);
                 setAiData(result.data);
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: result.data, ts: Date.now() }));
             } catch (err) {
                 console.warn('Audience AI fetch failed', err);
             } finally {

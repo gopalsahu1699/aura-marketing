@@ -7,7 +7,7 @@ import {
     ShoppingCart, Wallet, TrendingUp, TrendingDown, Brain, Zap,
     Loader2, Sparkles, CheckCircle2
 } from 'lucide-react';
-import { getDashboardAIData, runMarketResearch } from '@/app/actions/ai';
+import { runMarketResearch } from '@/app/actions/ai';
 import type { DashboardStat, ForecastPoint, ActivityEvent, DashboardNotification } from '@/app/actions/ai';
 
 // ─── Icon Map ─────────────────────────────────────────────────────────────────
@@ -135,9 +135,10 @@ export default function Dashboard() {
                 const { data: { user } } = await supabase.auth.getUser();
 
                 if (!user) {
-                    console.log("No authenticated user found for dashboard");
+                    console.error("DEBUG: No authenticated user found for dashboard");
                     return;
                 }
+                console.log("DEBUG: Found user", user.id);
 
                 // 2. Fetch real stats & forecast from DB based on selected dateRange
                 const { getRealDashboardData } = await import('@/app/actions/dashboard');
@@ -150,10 +151,9 @@ export default function Dashboard() {
                     console.error("Failed to load real dashboard stats:", res.error);
                 }
 
-                // 3. For Activity & Notifications, we'll keep the AI fallback until these tables exist
-                const backupAI = await getDashboardAIData();
-                setActivity(backupAI.data.activity);
-                setNotifications(backupAI.data.notifications);
+                // 3. Clear activity and notifications until real data is requested
+                setActivity([]);
+                setNotifications([]);
 
             } catch (err) {
                 console.error('Failed to load dashboard data:', err);
@@ -288,7 +288,19 @@ export default function Dashboard() {
                         <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tighter text-white uppercase italic">Enterprise Dashboard</h2>
                         <p className="text-slate-500 text-sm font-medium">Real-time performance and predictive growth forecast.</p>
                     </div>
-                    <div className="flex gap-2 sm:gap-3 flex-wrap">
+                    <div className="flex gap-2 sm:gap-3 flex-wrap items-center">
+                        {stats.length === 0 && !loadingAI && (
+                            <button
+                                onClick={async () => {
+                                    const { seedUserAnalytics } = await import('@/app/actions/seed');
+                                    await seedUserAnalytics();
+                                    window.location.reload();
+                                }}
+                                className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm transition-all"
+                            >
+                                <Zap size={16} /> Generate Real Data
+                            </button>
+                        )}
                         <button
                             onClick={() => router.push('/dashboard/campaigns')}
                             className="bg-primary hover:brightness-110 active:scale-95 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 text-sm transition-all shadow-lg shadow-primary/20"

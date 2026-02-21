@@ -39,133 +39,7 @@ interface TrainingModel {
 }
 
 export default function AITrainingPage() {
-    const defaultModels: TrainingModel[] = [
-        {
-            id: 1,
-            name: "Content Creator AI",
-            status: "Operational",
-            accuracy: "98.2%",
-            lastTrained: "2h ago",
-            color: "text-emerald-500",
-            bg: "bg-emerald-500/10",
-            progress: null,
-            icon: <Palette size={20} />,
-            description: "Generates social media posts, ad copy, blog intros, and marketing content aligned with your brand voice.",
-            dataPoints: "24,500",
-            type: "Content Generation",
-            systemPrompt: "You are an AI Content Creator training assistant. Help the user improve content generation quality by processing brand guidelines, tone of voice examples, successful posts, and writing style references.",
-            capabilities: ["Post Generation", "Ad Copy", "Captions", "Blog Intros", "Hashtags"],
-            chatHistory: [],
-            vaultFiles: [
-                { id: 101, name: "brand_voice_guide.pdf", date: "Oct 12, 2023", size: "2.4 MB", type: "pdf" },
-                { id: 102, name: "top_performing_posts.csv", date: "Oct 15, 2023", size: "890 KB", type: "csv" },
-            ]
-        },
-        {
-            id: 2,
-            name: "Audience Analyzer AI",
-            status: "Synching",
-            accuracy: "84.5%",
-            lastTrained: "In Progress",
-            color: "text-primary",
-            bg: "bg-primary/10",
-            progress: 65,
-            icon: <Users size={20} />,
-            description: "Maps behavioral signals to audience segments. Identifies personas, demographics, and engagement patterns.",
-            dataPoints: "18,200",
-            type: "Audience Analysis",
-            systemPrompt: "You are an Audience Analyzer AI training assistant. Help the user improve audience segmentation by processing customer data, demographics, behavioral patterns, and engagement metrics.",
-            capabilities: ["Persona Building", "Segmentation", "Demographics", "Behavior Mapping", "Lookalike Audiences"],
-            chatHistory: [],
-            vaultFiles: [
-                { id: 201, name: "customer_segments.csv", date: "Oct 8, 2023", size: "1.5 MB", type: "csv" },
-            ]
-        },
-        {
-            id: 3,
-            name: "Sentiment AI",
-            status: "Standby",
-            accuracy: "91.0%",
-            lastTrained: "1d ago",
-            color: "text-slate-400",
-            bg: "bg-slate-400/10",
-            progress: null,
-            icon: <Heart size={20} />,
-            description: "Analyzes customer reviews, comments, and social mentions to extract sentiment, emotions, and pain points.",
-            dataPoints: "12,800",
-            type: "Sentiment Analysis",
-            systemPrompt: "You are a Sentiment Analysis AI training assistant. Help the user improve sentiment detection by processing customer reviews, social media comments, support tickets, and feedback data.",
-            capabilities: ["Review Analysis", "Comment Sentiment", "Emotion Detection", "Pain Point ID", "Brand Perception"],
-            chatHistory: [],
-            vaultFiles: [
-                { id: 301, name: "customer_reviews_q3.csv", date: "Oct 5, 2023", size: "3.2 MB", type: "csv" },
-                { id: 302, name: "social_mentions.json", date: "Oct 6, 2023", size: "780 KB", type: "json" },
-            ]
-        },
-        {
-            id: 4,
-            name: "Predictive Intelligence AI",
-            status: "Standby",
-            accuracy: "87.3%",
-            lastTrained: "3d ago",
-            color: "text-slate-400",
-            bg: "bg-slate-400/10",
-            progress: null,
-            icon: <TrendingUp size={20} />,
-            description: "Forecasts demand, revenue trends, churn risk, and optimal pricing using historical patterns and market signals.",
-            dataPoints: "31,400",
-            type: "Predictive Analytics",
-            systemPrompt: "You are a Predictive Intelligence AI training assistant. Help the user improve predictions by processing sales data, revenue history, churn indicators, pricing experiments, and market trends.",
-            capabilities: ["Demand Forecast", "Revenue Prediction", "Churn Detection", "Price Optimization", "Trend Analysis"],
-            chatHistory: [],
-            vaultFiles: [
-                { id: 401, name: "sales_history_2023.csv", date: "Oct 1, 2023", size: "4.1 MB", type: "csv" },
-                { id: 402, name: "pricing_experiments.json", date: "Oct 3, 2023", size: "520 KB", type: "json" },
-            ]
-        },
-        {
-            id: 5,
-            name: "Competitor Intel AI",
-            status: "Operational",
-            accuracy: "89.7%",
-            lastTrained: "6h ago",
-            color: "text-emerald-500",
-            bg: "bg-emerald-500/10",
-            progress: null,
-            icon: <Eye size={20} />,
-            description: "Monitors competitor ads, content strategies, pricing changes, and market positioning to find gaps and opportunities.",
-            dataPoints: "9,600",
-            type: "Competitive Intelligence",
-            systemPrompt: "You are a Competitor Intelligence AI training assistant. Help the user improve competitive analysis by processing competitor data, ad creatives, pricing info, market research, and industry reports.",
-            capabilities: ["Ad Monitoring", "Price Tracking", "Content Analysis", "Market Gaps", "Strategy Insights"],
-            chatHistory: [],
-            vaultFiles: [
-                { id: 501, name: "competitor_ads_library.csv", date: "Oct 10, 2023", size: "1.8 MB", type: "csv" },
-            ]
-        },
-        {
-            id: 6,
-            name: "Studio Creator AI",
-            status: "Operational",
-            accuracy: "96.1%",
-            lastTrained: "30m ago",
-            color: "text-emerald-500",
-            bg: "bg-emerald-500/10",
-            progress: null,
-            icon: <Wand2 size={20} />,
-            description: "Powers all 3 Studio Creator tasks — AI Text Generator for copy & captions, AI Image Studio for visuals, and AI Reel Generator for video content.",
-            dataPoints: "42,300",
-            type: "Creative Studio",
-            systemPrompt: "You are a Studio Creator AI training assistant. You power 3 creative tasks: (1) AI Text Generator — captions, ad copy, blogs; (2) AI Image Studio — visual descriptions and prompts; (3) AI Reel Generator — video scripts, hooks, and storyboards. Help the user improve creative output by processing brand guidelines, successful content examples, and creative references.",
-            capabilities: ["Text Generation", "Image Prompts", "Video Scripts", "Ad Copy", "Captions", "Blog Writing"],
-            chatHistory: [],
-            vaultFiles: [
-                { id: 601, name: "brand_style_guide.pdf", date: "Oct 14, 2023", size: "3.5 MB", type: "pdf" },
-                { id: 602, name: "best_performing_creatives.csv", date: "Oct 12, 2023", size: "1.9 MB", type: "csv" },
-                { id: 603, name: "video_hooks_library.json", date: "Oct 11, 2023", size: "640 KB", type: "json" },
-            ]
-        },
-    ];
+    // Hardcoded defaults removed.
 
     const [models, setModels] = useState<TrainingModel[]>([]);
     const supabase = createBrowserClient();
@@ -188,7 +62,7 @@ export default function AITrainingPage() {
             const { data, error } = await supabase.from('training_models').select('*');
             if (error) {
                 console.error('Error fetching models:', error);
-                setModels(defaultModels); // Fallback to defaults if none in DB
+                setModels([]); // Empty if none in DB
                 return;
             }
             if (data && data.length > 0) {
@@ -200,7 +74,7 @@ export default function AITrainingPage() {
                 }));
                 setModels(transformedModels);
             } else {
-                setModels(defaultModels);
+                setModels([]);
             }
         };
         fetchModels();
