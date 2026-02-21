@@ -12,6 +12,16 @@ export async function generateChatContent(prompt: string, model?: NvidiaModel) {
     }
 }
 
+export async function runMarketResearch(prompt: string, model?: NvidiaModel) {
+    try {
+        const content = await nvidia.marketResearch(prompt, model);
+        return { success: true, content };
+    } catch (error: any) {
+        console.error("AI Market Research Error:", error);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function generateContentImage(prompt: string) {
     try {
         const url = await nvidia.generateImage(prompt);

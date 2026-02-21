@@ -31,6 +31,10 @@ export default function AIContentStudioPage() {
     const [showExportSuccess, setShowExportSuccess] = useState(false);
     const [history, setHistory] = useState<any[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+    const [textError, setTextError] = useState('');
+    const [imageError, setImageError] = useState('');
+    const [videoStatus, setVideoStatus] = useState('');
+    const [copiedId, setCopiedId] = useState<string | null>(null);
 
     const supabase = createBrowserClient();
 
@@ -81,10 +85,20 @@ export default function AIContentStudioPage() {
     };
 
     const handleGenerateText = async () => {
-        if (!textPrompt) return;
+        if (!textPrompt.trim()) {
+            setTextError('Please enter a prompt first.');
+            setTimeout(() => setTextError(''), 3000);
+            return;
+        }
+        setTextError('');
         setIsGeneratingText(true);
         try {
-            const { success, content, error } = await generateChatContent(`Generate a high-converting social media caption for: ${textPrompt}. Include hashtags and emojis.`);
+            const typePrompt = activeTextType === 'Caption'
+                ? `Generate a high-converting social media caption with hashtags and emojis for: ${textPrompt}`
+                : activeTextType === 'Ad Copy'
+                    ? `Write persuasive ad copy for: ${textPrompt}. Include a strong CTA.`
+                    : `Write an engaging blog introduction for the topic: ${textPrompt}`;
+            const { success, content, error } = await generateChatContent(typePrompt);
             if (success && content) {
                 setGeneratedText(content);
                 await handleSaveHistory('Text', textPrompt, content, 'Draft');
@@ -93,14 +107,20 @@ export default function AIContentStudioPage() {
             }
         } catch (error: any) {
             console.error(error);
-            setGeneratedText("Error generating text. please check system logs.");
+            setTextError('Generation failed: ' + (error.message || 'Unknown error'));
+            setTimeout(() => setTextError(''), 5000);
         } finally {
             setIsGeneratingText(false);
         }
     };
 
     const handleGenerateImage = async () => {
-        if (!imagePrompt) return;
+        if (!imagePrompt.trim()) {
+            setImageError('Please describe the visual first.');
+            setTimeout(() => setImageError(''), 3000);
+            return;
+        }
+        setImageError('');
         setIsGeneratingImage(true);
         setPublishSuccess(null);
         try {
@@ -111,31 +131,55 @@ export default function AIContentStudioPage() {
             } else {
                 throw new Error(error);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            setImageError('Image generation failed: ' + (error.message || 'Try again'));
+            setTimeout(() => setImageError(''), 5000);
         } finally {
             setIsGeneratingImage(false);
         }
     };
 
     const handleGenerateVideo = async () => {
-        if (!videoPrompt) return;
+        if (!videoPrompt.trim()) {
+            setVideoStatus('⚠ Please describe the video first.');
+            setTimeout(() => setVideoStatus(''), 3000);
+            return;
+        }
+        setVideoStatus('');
         setIsGeneratingVideo(true);
         setPublishSuccess(null);
         try {
             const { success, job_id, error } = await generateContentVideo(videoPrompt);
             if (success && job_id) {
                 setVideoJobId(job_id);
+                setVideoStatus(`✓ Video queued! Job ID: ${job_id}`);
                 await handleSaveHistory('Video', videoPrompt, `Job ID: ${job_id}`, 'Draft');
-                alert("Video generation queued! ID: " + job_id);
             } else {
                 throw new Error(error);
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error(error);
+            setVideoStatus('⚠ ' + (error.message || 'Video generation failed'));
         } finally {
             setIsGeneratingVideo(false);
         }
+    };
+
+    // Real export: downloads generated content as a text file
+    const handleExport = () => {
+        const parts: string[] = [];
+        if (generatedText) parts.push('=== GENERATED TEXT ===\n' + generatedText);
+        if (generatedImage) parts.push('=== GENERATED IMAGE URL ===\n' + generatedImage);
+        if (videoJobId) parts.push('=== VIDEO JOB ID ===\n' + videoJobId);
+        if (parts.length === 0) { setShowExportSuccess(false); return; }
+        const blob = new Blob([parts.join('\n\n')], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url;
+        a.download = `aura-studio-content-${new Date().toISOString().split('T')[0]}.txt`;
+        a.click(); URL.revokeObjectURL(url);
+        setShowExportSuccess(true);
+        setTimeout(() => setShowExportSuccess(false), 2500);
     };
 
     return (
@@ -171,10 +215,10 @@ export default function AIContentStudioPage() {
                         History
                     </button>
                     <button
-                        onClick={() => { setShowExportSuccess(true); setTimeout(() => setShowExportSuccess(false), 2500); }}
+                        onClick={handleExport}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
                     >
-                        {showExportSuccess ? '✓ Exported!' : 'Export'}
+                        {showExportSuccess ? '✓ Saved!' : 'Export'}
                     </button>
                 </div>
             </header>
@@ -212,13 +256,14 @@ export default function AIContentStudioPage() {
                                     </div>
                                     <div className="mt-3 flex gap-2">
                                         <button
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(item.generated_content);
-                                                alert("Content copied!");
+                                            onClick={async () => {
+                                                await navigator.clipboard.writeText(item.generated_content);
+                                                setCopiedId(item.id || String(idx));
+                                                setTimeout(() => setCopiedId(null), 2000);
                                             }}
                                             className="flex-1 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-[9px] font-black uppercase tracking-widest text-white transition-all"
                                         >
-                                            Copy
+                                            {copiedId === (item.id || String(idx)) ? '✓ Copied' : 'Copy'}
                                         </button>
                                         <button
                                             onClick={() => {
@@ -295,6 +340,9 @@ export default function AIContentStudioPage() {
                             </div>
                         )}
 
+                        {textError && (
+                            <p className="text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 mb-3">{textError}</p>
+                        )}
                         <button
                             onClick={handleGenerateText}
                             disabled={isGeneratingText}
@@ -323,37 +371,70 @@ export default function AIContentStudioPage() {
                                 ></textarea>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="aspect-video rounded-2xl bg-primary/5 border border-dashed border-primary/20 flex flex-col items-center justify-center group cursor-pointer hover:bg-primary/10 transition-all">
-                                    <LucideUpload size={20} className="text-primary mb-2" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Upload Source</span>
-                                </div>
-                                <div className="relative aspect-video rounded-2xl bg-primary/10 overflow-hidden border border-primary/10">
+                            <div className="space-y-3">
+                                {/* Large Preview Area */}
+                                <div className="relative w-full aspect-square rounded-2xl bg-primary/10 overflow-hidden border border-primary/10">
                                     {isGeneratingImage ? (
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <LucideLoader className="animate-spin text-primary" size={24} />
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                                            <LucideLoader className="animate-spin text-primary" size={32} />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 animate-pulse">Generating...</p>
                                         </div>
                                     ) : generatedImage ? (
                                         <div className="w-full h-full relative group/img">
-                                            <img src={generatedImage} className="w-full h-full object-cover" alt="Generated" />
-                                            <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex justify-end">
+                                            <img src={generatedImage} className="w-full h-full object-contain" alt="Generated" />
+                                            {/* Hover action bar */}
+                                            <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover/img:opacity-100 transition-opacity flex gap-2">
+                                                <a
+                                                    href={generatedImage}
+                                                    download="aura-generated-image.jpg"
+                                                    className="flex-1 py-2.5 bg-white text-slate-900 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg hover:brightness-110 transition-all"
+                                                >
+                                                    <LucideDownload size={12} /> Download
+                                                </a>
                                                 <button
                                                     onClick={() => handlePublish('Image', imagePrompt, generatedImage)}
                                                     disabled={isPublishing === 'Image'}
-                                                    className="px-4 py-2 bg-indigo-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg"
+                                                    className="flex-1 py-2.5 bg-indigo-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 shadow-lg hover:brightness-110 transition-all"
                                                 >
                                                     {isPublishing === 'Image' ? <LucideLoader className="animate-spin" size={12} /> : <Globe size={12} />}
-                                                    {publishSuccess === 'Image' ? 'Published' : 'Publish'}
+                                                    {publishSuccess === 'Image' ? 'Published!' : 'Publish'}
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center opacity-30 italic text-xs font-bold text-slate-400 uppercase tracking-widest">Preview</div>
+                                        <div className="w-full h-full flex flex-col items-center justify-center gap-2 opacity-30">
+                                            <LucideImage size={32} className="text-slate-400" />
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Preview will appear here</p>
+                                        </div>
                                     )}
                                 </div>
+
+                                {/* Persistent action buttons below image when available */}
+                                {generatedImage && (
+                                    <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2">
+                                        <a
+                                            href={generatedImage}
+                                            download="aura-generated-image.jpg"
+                                            className="flex-1 py-3 bg-white/10 border border-white/20 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-white/20 transition-all"
+                                        >
+                                            <LucideDownload size={14} /> Download
+                                        </a>
+                                        <button
+                                            onClick={() => handlePublish('Image', imagePrompt, generatedImage)}
+                                            disabled={isPublishing === 'Image'}
+                                            className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:brightness-110 active:scale-95 transition-all"
+                                        >
+                                            {isPublishing === 'Image' ? <LucideLoader className="animate-spin" size={14} /> : <Globe size={14} />}
+                                            {publishSuccess === 'Image' ? 'Published!' : 'Publish'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
+                        {imageError && (
+                            <p className="text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2 mb-3">{imageError}</p>
+                        )}
                         <button
                             onClick={handleGenerateImage}
                             disabled={isGeneratingImage}
@@ -372,6 +453,16 @@ export default function AIContentStudioPage() {
                         </div>
 
                         <div className="flex-1 space-y-6 overflow-y-auto no-scrollbar pb-4">
+                            <div className="relative">
+                                <LucideSearch className="absolute left-4 top-4 text-slate-400" size={16} />
+                                <textarea
+                                    value={videoPrompt}
+                                    onChange={(e) => setVideoPrompt(e.target.value)}
+                                    className="w-full h-24 bg-primary/3 border border-primary/10 rounded-2xl pl-12 pr-4 py-4 text-sm focus:ring-primary focus:border-primary resize-none placeholder:text-slate-400 font-medium"
+                                    placeholder="Describe the video... (e.g. A 10-second high-energy product reveal with neon accents)"
+                                ></textarea>
+                            </div>
+
                             <div className="space-y-4">
                                 <div className="p-4 bg-primary/3 border border-primary/10 rounded-2xl">
                                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Video Script Outline</p>
@@ -406,6 +497,9 @@ export default function AIContentStudioPage() {
                             </div>
                         </div>
 
+                        {videoStatus && (
+                            <p className={`text-xs font-bold rounded-xl px-4 py-2 mb-3 ${videoStatus.startsWith('✓') ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20' : 'text-red-400 bg-red-500/10 border border-red-500/20'}`}>{videoStatus}</p>
+                        )}
                         <button
                             onClick={handleGenerateVideo}
                             disabled={isGeneratingVideo}

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
     Globe, Instagram, Facebook, Linkedin, Youtube,
     Link as LinkIcon, CheckCircle2, Clock, ShieldCheck,
-    ArrowRight, Loader2, Plus, AlertCircle,
+    ArrowRight, Loader2, Plus, AlertCircle, X,
     Zap, Sparkles, Smartphone, Share2,
     Lock, RefreshCw, ChevronRight, Activity
 } from 'lucide-react';
@@ -107,14 +107,44 @@ export default function ConnectionsPage() {
         fetchPlatforms();
     }, []);
 
-    const handleConnect = (id: string) => {
+    const handleConnect = async (id: string) => {
         setIsConnecting(id);
-        setTimeout(() => {
-            setPlatforms(prev => prev.map(p =>
-                p.id === id ? { ...p, status: 'connected', handle: 'Verified Account', lastSynced: 'Just now' } : p
-            ));
+        // Simulate OAuth flow
+        setTimeout(async () => {
+            const updated = { ...platforms.find(p => p.id === id)!, status: 'connected' as const, handle: 'Verified Account', lastSynced: new Date().toISOString() };
+            setPlatforms(prev => prev.map(p => p.id === id ? updated : p));
+            // Persist to Supabase
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    await supabase.from('connections_platforms').upsert({
+                        user_id: user.id,
+                        platform_id: id,
+                        name: updated.name,
+                        status: 'Connected',
+                        handle: updated.handle,
+                        last_synced: updated.lastSynced,
+                        description: updated.description,
+                        color: updated.color,
+                        icon_name: id,
+                    }, { onConflict: 'user_id,platform_id' });
+                }
+            } catch (e) { console.warn('Supabase persist failed', e); }
             setIsConnecting(null);
         }, 2000);
+    };
+
+    const handleDisconnect = async (id: string) => {
+        if (!confirm('Disconnect this platform? You can reconnect anytime.')) return;
+        setPlatforms(prev => prev.map(p => p.id === id ? { ...p, status: 'disconnected' as const, handle: undefined, lastSynced: undefined } : p));
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                await supabase.from('connections_platforms')
+                    .update({ status: 'Disconnected', handle: null, last_synced: null })
+                    .eq('user_id', user.id).eq('platform_id', id);
+            }
+        } catch (e) { console.warn('Supabase update failed', e); }
     };
 
     return (
@@ -269,8 +299,11 @@ export default function ConnectionsPage() {
                                                 Initialize
                                             </button>
                                         ) : (
-                                            <button className="p-3 bg-slate-50 dark:bg-white/5 border border-primary/5 rounded-2xl text-slate-400 hover:text-red-500 transition-all group/btn">
-                                                <ChevronRight size={20} className="group-hover/btn:translate-x-1 transition-transform" />
+                                            <button
+                                                onClick={() => handleDisconnect(platform.id)}
+                                                className="px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 hover:bg-red-500/20 transition-all text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                                            >
+                                                <X size={14} /> Disconnect
                                             </button>
                                         )}
                                     </div>

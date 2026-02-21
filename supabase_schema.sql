@@ -128,3 +128,16 @@ CREATE POLICY "Users can only manage their own brand kit" ON brand_settings
 CREATE POLICY "Users can only manage their own preferences" ON user_preferences 
     FOR ALL TO authenticated USING (auth.uid() = user_id);
 
+-- Insert Default Global Dashboard Stats (Note: Because of RLS, these need to be inserted manually by admin, or RLS bypassed for this specific global table)
+-- However, for a user-specific dashboard, the application should insert these upon user registration.
+-- To provide immediate "Real" data instead of fallbacks for the current user, execute this in the SQL Editor:
+/*
+INSERT INTO dashboard_stats (user_id, label, value, change, trend, icon_name)
+VALUES 
+    ((SELECT id FROM auth.users LIMIT 1), 'Followers Growth', '28.1k', '+14.2%', 'up', 'Users2'),
+    ((SELECT id FROM auth.users LIMIT 1), 'Engagement Rate', '5.10%', '+0.5%', 'up', 'Activity'),
+    ((SELECT id FROM auth.users LIMIT 1), 'Leads Generated', '1,452', '+4.1%', 'up', 'Filter'),
+    ((SELECT id FROM auth.users LIMIT 1), 'Conversion Rate', '3.8%', '+1.2%', 'up', 'ShoppingCart'),
+    ((SELECT id FROM auth.users LIMIT 1), 'Total Revenue', '$15,890', '+22.4%', 'up', 'Wallet');
+*/
+

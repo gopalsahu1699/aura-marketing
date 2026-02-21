@@ -50,6 +50,7 @@ export default function Sidebar() {
 
     const navItems = [
         { name: "Dashboard", href: "/dashboard", icon: "dashboard" },
+        { name: "Campaigns", href: "/dashboard/campaigns", icon: "campaign" },
         { name: "Advanced Analytics", href: "/dashboard/analytics", icon: "monitoring" },
         { name: "Audience Insights", href: "/dashboard/audience", icon: "group" },
         { name: "Studio Creator", href: "/dashboard/content", icon: "auto_fix_high" },

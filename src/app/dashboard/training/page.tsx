@@ -317,7 +317,7 @@ export default function AITrainingPage() {
 
         try {
             const fullPrompt = `${activeModel.systemPrompt}\n\nConversation so far:\n${activeModel.chatHistory.map(m => `${m.role}: ${m.content}`).join('\n')}\n\nUser: ${userMessage}`;
-            const { success, content, error } = await generateChatContent(fullPrompt);
+            const { success, content, error } = await generateChatContent(fullPrompt, "meta/llama-3.3-70b-instruct");
             if (success && content) {
                 setModels(prev => prev.map(m =>
                     m.id === activeModelId ? { ...m, chatHistory: [...m.chatHistory, { role: "assistant", content }] } : m

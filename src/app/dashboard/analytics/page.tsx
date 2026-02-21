@@ -16,10 +16,12 @@ import {
 } from 'lucide-react';
 import { generateChatContent } from '@/app/actions/ai';
 import { createBrowserClient } from '@/lib/supabase-client';
+import { useRouter } from 'next/navigation';
 
 type InsightsTab = 'audience' | 'behavior' | 'painpoints' | 'demand' | 'geo' | 'competitors' | 'predictive';
 
 export default function AnalyticsReportingPage() {
+    const router = useRouter();
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [aiSentiment, setAiSentiment] = useState<string | null>(null);
     const [timeRange, setTimeRange] = useState("Last 30 Days");
@@ -28,6 +30,7 @@ export default function AnalyticsReportingPage() {
     const [growthData, setGrowthData] = useState<any[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [demographics, setDemographics] = useState<any>(null);
+    const [roiData, setRoiData] = useState<any>(null);
 
     const timeOptions = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'This Year'];
     const supabase = createBrowserClient();
@@ -79,6 +82,14 @@ export default function AnalyticsReportingPage() {
                 if (insightData) {
                     setDemographics(insightData.data);
                 }
+
+                // Fetch ROI data
+                const { data: roiInsight } = await supabase
+                    .from('audience_insights')
+                    .select('data')
+                    .eq('category', 'roi')
+                    .single();
+                if (roiInsight?.data) setRoiData(roiInsight.data);
             } catch (err) {
                 console.warn('Supabase analytics fetch failed', err);
             } finally {
@@ -90,10 +101,28 @@ export default function AnalyticsReportingPage() {
         handleRunAiAnalysis();
     }, [timeRange]);
 
+    // Real CSV export using actual growth data
+    const handleExport = () => {
+        const rows = [
+            ['Period', 'Growth Value', 'Time Range'],
+            ...growthData.map((d: any) => [d.label, d.value, timeRange])
+        ];
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `aura-analytics-${timeRange.replace(/\s+/g, '-').toLowerCase()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setExportSuccess(true);
+        setTimeout(() => setExportSuccess(false), 2500);
+    };
+
     const stats = [
-        { label: "Marketing ROI", value: "$12,450.00", change: "+12.5%", positive: true, icon: <TrendingUp size={20} /> },
-        { label: "Attributed Revenue", value: "$45,200.00", change: "+8.2%", positive: true, icon: <BarChart3 size={20} /> },
-        { label: "AI Efficiency Gain", value: "+24%", change: "+4.1%", positive: true, icon: <Sparkles size={20} /> },
+        { label: "Marketing ROI", value: roiData?.marketing_roi || "$12,450", change: roiData?.roi_change || "+12.5%", positive: true, icon: <TrendingUp size={20} /> },
+        { label: "Attributed Revenue", value: roiData?.attributed_revenue || "$45,200", change: roiData?.revenue_change || "+8.2%", positive: true, icon: <BarChart3 size={20} /> },
+        { label: "AI Efficiency Gain", value: roiData?.ai_efficiency || "+24%", change: roiData?.efficiency_change || "+4.1%", positive: true, icon: <Sparkles size={20} /> },
     ];
 
     return (
@@ -122,11 +151,11 @@ export default function AnalyticsReportingPage() {
                         <span className="text-xs font-bold uppercase tracking-wider sm:hidden">{timeRange.replace('Last ', '')}</span>
                     </button>
                     <button
-                        onClick={() => { setExportSuccess(true); setTimeout(() => setExportSuccess(false), 2500); }}
+                        onClick={handleExport}
                         className="flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-white text-slate-900 rounded-xl text-xs font-black uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-black/10"
                     >
                         <Download size={14} />
-                        <span className="hidden sm:inline">{exportSuccess ? '✓ Exported!' : 'Export Data'}</span>
+                        <span className="hidden sm:inline">{exportSuccess ? '✓ Downloaded!' : 'Export CSV'}</span>
                         <span className="sm:hidden">{exportSuccess ? '✓' : 'Export'}</span>
                     </button>
                 </div>
@@ -242,7 +271,12 @@ export default function AnalyticsReportingPage() {
                             <h3 className="text-xl font-black uppercase italic tracking-tight mb-1">Top Performers</h3>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">High Conversion Content Hub</p>
                         </div>
-                        <button className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b-2 border-primary/20 hover:border-primary transition-all pb-1">Archive</button>
+                        <button
+                            onClick={() => router.push('/dashboard/campaigns?filter=completed')}
+                            className="text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b-2 border-primary/20 hover:border-primary transition-all pb-1"
+                        >
+                            View All
+                        </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

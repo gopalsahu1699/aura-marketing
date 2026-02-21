@@ -56,8 +56,9 @@ export default function SettingsBrandKitPage() {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                alert("You must be logged in to save settings.");
                 setSaveStatus('error');
+                console.error("Not authenticated — cannot save settings");
+                setTimeout(() => setSaveStatus('idle'), 3000);
                 return;
             }
 
@@ -564,8 +565,12 @@ export default function SettingsBrandKitPage() {
 
             {/* Mobile Save Bar */}
             <div className="p-6 border-t border-primary/10 bg-background md:hidden">
-                <button className="w-full py-4 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-2xl shadow-primary/30 active:scale-95 transition-all">
-                    Synchronize evolution
+                <button
+                    onClick={handleSave}
+                    disabled={saveStatus === 'saving'}
+                    className="w-full py-4 bg-primary text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-2xl shadow-primary/30 active:scale-95 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                    {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Synchronized!' : 'Synchronize evolution'}
                 </button>
             </div>
         </div>

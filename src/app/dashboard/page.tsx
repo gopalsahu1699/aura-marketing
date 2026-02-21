@@ -1,13 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Search, Bell, Plus, Calendar, Users2, Activity, Filter,
     ShoppingCart, Wallet, TrendingUp, TrendingDown, Brain, Zap, Clock,
     Loader2, Sparkles, Send, CheckCircle2
 } from 'lucide-react';
-import { generateChatContent } from '@/app/actions/ai';
+import { generateChatContent, runMarketResearch } from '@/app/actions/ai';
 import { createBrowserClient } from '@/lib/supabase-client';
+import { seedUserAnalytics } from '@/app/actions/seed';
 
 interface Stat {
     label: string;
@@ -26,6 +28,7 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export default function Dashboard() {
+    const router = useRouter();
     const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
     const [aiInsight, setAiInsight] = useState<string | null>(null);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -34,6 +37,7 @@ export default function Dashboard() {
 
     const [stats, setStats] = useState<Stat[]>([]);
     const [loadingStats, setLoadingStats] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const supabase = createBrowserClient();
 
     useEffect(() => {
@@ -67,6 +71,8 @@ export default function Dashboard() {
             }
         };
         fetchDashboardStats();
+        // Auto-seed data for new users
+        seedUserAnalytics().catch(console.warn);
     }, [supabase]);
 
     const handleRunAnalysis = async () => {
@@ -79,7 +85,7 @@ export default function Dashboard() {
 
             const prompt = `As a senior marketing analyst for Aura Marketing, analyze the following performance data: ${statsContext}. Provide 3 specific, actionable recommendations for the next 48 hours to optimize these results. Keep it professional and concise.`;
 
-            const { success, content, error } = await generateChatContent(prompt);
+            const { success, content, error } = await runMarketResearch(prompt);
             if (success && content) {
                 setAiInsight(content);
             } else {
@@ -94,7 +100,7 @@ export default function Dashboard() {
     };
 
     const handleNewCampaign = () => {
-        alert("Campaign builder coming soon! Powered by Aura AI.");
+        router.push('/dashboard/campaigns');
     };
 
     return (
@@ -104,10 +110,25 @@ export default function Dashboard() {
                 <div className="relative w-full max-w-md hidden md:block">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                     <input
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && searchQuery.trim()) {
+                                router.push(`/dashboard/analytics`);
+                            }
+                        }}
                         className="w-full bg-primary/5 border border-primary/10 rounded-full py-2 pl-10 pr-4 text-sm text-slate-100 focus:outline-none focus:border-primary focus:bg-primary/10 transition-all font-medium"
                         placeholder="Search analytics or AI insights..."
                         type="text"
                     />
+                    {searchQuery && (
+                        <button
+                            onClick={() => router.push('/dashboard/analytics')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-black text-primary uppercase tracking-wider"
+                        >
+                            Go →
+                        </button>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -136,7 +157,12 @@ export default function Dashboard() {
                                 </div>
                             ))}
                             <div className="p-3 text-center">
-                                <button className="text-[10px] font-black uppercase tracking-widest text-primary hover:text-white transition-colors">View All</button>
+                                <button
+                                    onClick={() => { setShowNotifications(false); router.push('/dashboard/analytics'); }}
+                                    className="text-[10px] font-black uppercase tracking-widest text-primary hover:text-white transition-colors"
+                                >
+                                    View All
+                                </button>
                             </div>
                         </div>
                     )}
@@ -251,7 +277,7 @@ export default function Dashboard() {
                                     ) : (
                                         <div className="py-4">
                                             <p className="text-sm font-medium text-white/80 leading-relaxed italic">
-                                                Click the button below to perform a deep-dive analysis using NVIDIA Llama 3.1 70B.
+                                                Click the button below to perform a deep-dive analysis using NVIDIA Llama 3.3 70B.
                                             </p>
                                         </div>
                                     )}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Users, UserPlus, UserMinus, Zap,
     Download, Calendar, Globe, Target,
@@ -8,14 +8,66 @@ import {
     Facebook, Twitter, Info, BarChart3,
     Sparkles
 } from 'lucide-react';
+import { createBrowserClient } from '@/lib/supabase-client';
+import { useRouter } from 'next/navigation';
 
 export default function AudienceInsightsPage() {
+    const router = useRouter();
+    const supabase = createBrowserClient();
     const [activePlatform, setActivePlatform] = useState('All');
     const [dateRange, setDateRange] = useState('Oct 2023 - Current');
     const [showExportSuccess, setShowExportSuccess] = useState(false);
+    const [audienceData, setAudienceData] = useState<any>(null);
     const dateOptions = ['Oct 2023 - Current', 'Last 30 Days', 'Last 90 Days', 'This Year'];
 
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const { data } = await supabase
+                    .from('audience_insights')
+                    .select('data')
+                    .eq('category', 'audience')
+                    .single();
+                if (data?.data) setAudienceData(data.data);
+            } catch { /* fallback to defaults */ }
+        };
+        load();
+    }, []);
+
+    const stats = [
+        { label: "Total Audience", value: audienceData?.total || "85,420", change: "+2.4%", icon: <Users size={20} /> },
+        { label: "New Followers", value: audienceData?.new_followers || "+1,248", change: "+5.1%", icon: <UserPlus size={20} /> },
+        { label: "Churn Rate", value: audienceData?.churn_rate || "0.82%", change: "-0.2%", icon: <UserMinus size={20} /> },
+        { label: "Active Users", value: audienceData?.active_users || "12,504", change: "+1.8%", icon: <Zap size={20} /> },
+    ];
+
+    const platforms = audienceData?.platforms || [
+        { name: "Instagram", val: 75, count: "45k" },
+        { name: "Facebook", val: 55, count: "28k" },
+        { name: "Twitter", val: 35, count: "12k" },
+    ];
+
+    const interests = audienceData?.interests || ['Generative AI', 'SaaS Tech', 'Sustainability', 'UX Design', 'Digital Art', 'Remote Work'];
+
     const handleExport = () => {
+        const rows = [
+            ['Metric', 'Value'],
+            ['Total Audience', audienceData?.total || '85,420'],
+            ['New Followers', audienceData?.new_followers || '+1,248'],
+            ['Churn Rate', audienceData?.churn_rate || '0.82%'],
+            ['Active Users', audienceData?.active_users || '12,504'],
+            ['Primary Location', audienceData?.locations?.[0]?.city || 'Mumbai, India'],
+            ['Age Range', audienceData?.age_range || '25-34'],
+            ['Top Gender', audienceData?.top_gender || '62% Female'],
+        ];
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `aura-audience-insights-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
         setShowExportSuccess(true);
         setTimeout(() => setShowExportSuccess(false), 2500);
     };
@@ -56,12 +108,7 @@ export default function AudienceInsightsPage() {
             <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 no-scrollbar">
                 {/* Summary Stats */}
                 <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[
-                        { label: "Total Audience", value: "85,420", change: "+2.4%", icon: <Users size={20} />, color: "primary" },
-                        { label: "New Followers", value: "+1,248", change: "+5.1%", icon: <UserPlus size={20} />, color: "primary" },
-                        { label: "Churn Rate", value: "0.82%", change: "-0.2%", icon: <UserMinus size={20} />, color: "primary" },
-                        { label: "Active Users", value: "12,504", change: "+1.8%", icon: <Zap size={20} />, color: "primary" },
-                    ].map((stat, i) => (
+                    {stats.map((stat, i) => (
                         <div key={i} className="bg-primary/5 border border-primary/10 p-6 rounded-[2rem] shadow-sm hover:border-primary/30 transition-all group relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-primary/10 transition-colors" />
                             <div className="flex justify-between items-start mb-6 relative z-10">
@@ -168,7 +215,7 @@ export default function AudienceInsightsPage() {
                                 <span className="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded uppercase backdrop-blur-md">AI Analyzed</span>
                             </div>
                             <div className="flex flex-wrap gap-2 mb-10">
-                                {['Generative AI', 'SaaS Tech', 'Sustainability', 'UX Design', 'Digital Art', 'Remote Work'].map(tag => (
+                                {interests.map((tag: string) => (
                                     <div key={tag} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-default">
                                         {tag}
                                     </div>
@@ -186,14 +233,10 @@ export default function AudienceInsightsPage() {
                     <div className="bg-primary/5 border border-primary/10 rounded-[2.5rem] p-8 shadow-sm group hover:border-primary/20 transition-all">
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-8 text-white">Platforms</h3>
                         <div className="space-y-6">
-                            {[
-                                { name: "Instagram", val: 75, count: "45k", icon: <Instagram size={18} /> },
-                                { name: "Facebook", val: 55, count: "28k", icon: <Facebook size={18} /> },
-                                { name: "Twitter", val: 35, count: "12k", icon: <Twitter size={18} /> }
-                            ].map(p => (
+                            {platforms.map((p: any) => (
                                 <div key={p.name} className="flex items-center gap-4 group/item">
                                     <div className="p-2.5 rounded-2xl bg-primary/10 text-primary group-hover/item:bg-primary group-hover/item:text-white transition-all">
-                                        {p.icon}
+                                        {p.name === 'Instagram' ? <Instagram size={18} /> : p.name === 'Facebook' ? <Facebook size={18} /> : <Twitter size={18} />}
                                     </div>
                                     <div className="flex-1">
                                         <div className="flex justify-between mb-2">
@@ -218,8 +261,8 @@ export default function AudienceInsightsPage() {
                     </div>
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
                         {[
-                            { title: "Retarget London Tech", desc: "High engagement detected. Start video sequence.", btn: "Launch Campaign" },
-                            { title: "FB Churn Recovery", desc: "Churn up 0.5%. AI recommends a carousel.", btn: "Create Content" }
+                            { title: "Retarget London Tech", desc: "High engagement detected. Start video sequence.", btn: "Launch Campaign", href: '/dashboard/campaigns' },
+                            { title: "FB Churn Recovery", desc: "Churn up 0.5%. AI recommends a carousel.", btn: "Create Content", href: '/dashboard/content' }
                         ].map((card, i) => (
                             <div key={i} className="bg-gradient-to-br from-white dark:from-primary/10 to-transparent border border-primary/20 p-8 rounded-[2.5rem] flex items-start gap-6 group hover:translate-y-[-4px] transition-all">
                                 <div className="p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20">
@@ -228,7 +271,10 @@ export default function AudienceInsightsPage() {
                                 <div className="flex-1">
                                     <h4 className="text-white font-black uppercase italic tracking-tight mb-2">{card.title}</h4>
                                     <p className="text-slate-500 dark:text-slate-400 text-xs font-medium leading-relaxed mb-6">{card.desc}</p>
-                                    <button className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] group">
+                                    <button
+                                        onClick={() => router.push(card.href)}
+                                        className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-[0.2em] group"
+                                    >
                                         {card.btn} <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                                     </button>
                                 </div>
