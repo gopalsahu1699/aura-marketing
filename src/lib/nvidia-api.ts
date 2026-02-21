@@ -1,3 +1,13 @@
+import { createClient } from '@supabase/supabase-js';
+
+// Server-side only client for the API
+const createServerClient = () => {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+};
+
 /**
  * NVIDIA AI API Utility
  * Provides a unified interface for calling NVIDIA NIMs for text, image, and video generation.
@@ -29,13 +39,50 @@ export interface NvidiaImageResponse {
     }[];
 }
 
+/**
+ * Helper function to retrieve the correct API key.
+ * Prioritizes user-specific keys from Supabase over global environment variables.
+ */
+async function getApiKey(type: 'chat' | 'research' | 'image' | 'video'): Promise<string> {
+    try {
+        const supabase = await createServerClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user) {
+            const { data } = await supabase
+                .from('user_preferences')
+                .select('api_keys')
+                .eq('user_id', user.id)
+                .single();
+
+            if (data?.api_keys) {
+                const keys = data.api_keys as any;
+                if (type === 'chat' && keys.nvidia_chat) return keys.nvidia_chat;
+                if (type === 'research' && keys.nvidia_research) return keys.nvidia_research;
+                if (type === 'image' && keys.nvidia_image) return keys.nvidia_image;
+                if (type === 'video' && keys.nvidia_video) return keys.nvidia_video;
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching custom API key:', error);
+    }
+
+    // Fallback to environment variables
+    if (type === 'chat') return process.env.NVIDIA_API_KEY_CHAT || process.env.NVIDIA_API_KEY || '';
+    if (type === 'research') return process.env.NVIDIA_API_KEY_RESEARCH || process.env.NVIDIA_API_KEY || '';
+    if (type === 'image') return process.env.NVIDIA_API_KEY_IMAGE || process.env.NVIDIA_API_KEY || '';
+    if (type === 'video') return process.env.NVIDIA_API_KEY_VIDEO || process.env.NVIDIA_API_KEY || '';
+
+    return '';
+}
+
 export const nvidia = {
     /**
      * Chat/Text Completion (Llama 3.1)
      * Used for Marketing Analysis, Description Generation, etc.
      */
     chat: async (prompt: string, model: NvidiaModel = "meta/llama-3.1-70b-instruct"): Promise<string> => {
-        const apiKey = process.env.NVIDIA_API_KEY_CHAT || process.env.NVIDIA_API_KEY;
+        const apiKey = await getApiKey('chat');
         if (!apiKey) throw new Error("NVIDIA API Key is missing");
 
         const response = await fetch(`${NVIDIA_BASE_URL}/chat/completions`, {
@@ -76,7 +123,7 @@ export const nvidia = {
      * Market Research Analysis (Llama 3.3)
      */
     marketResearch: async (prompt: string, model: NvidiaModel = "meta/llama-3.3-70b-instruct"): Promise<string> => {
-        const apiKey = process.env.NVIDIA_API_KEY_RESEARCH || process.env.NVIDIA_API_KEY;
+        const apiKey = await getApiKey('research');
         if (!apiKey) throw new Error("NVIDIA API Key is missing");
 
         const systemMessage = {
@@ -122,7 +169,7 @@ export const nvidia = {
      * Image Generation (SDXL Turbo)
      */
     generateImage: async (prompt: string): Promise<string> => {
-        const apiKey = process.env.NVIDIA_API_KEY_IMAGE || process.env.NVIDIA_API_KEY;
+        const apiKey = await getApiKey('image');
         if (!apiKey) throw new Error("NVIDIA API Key is missing");
 
         const response = await fetch(`${NVIDIA_GENAI_URL}/stabilityai/stable-diffusion-xl`, {

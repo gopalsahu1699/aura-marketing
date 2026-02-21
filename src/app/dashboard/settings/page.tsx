@@ -22,6 +22,10 @@ export default function SettingsBrandKitPage() {
         business_email: 'hello@auramarketing.io',
         industry: 'Marketing & Advertising',
         timezone: 'Asia/Kolkata',
+        website: '',
+        phone_contact: '',
+        address: '',
+        products_services: '',
         description: '',
         primary_logo: '',
         secondary_mark: '',
@@ -204,17 +208,60 @@ export default function SettingsBrandKitPage() {
                                             <select
                                                 value={brandSettings.timezone}
                                                 onChange={(e) => setBrandSettings({ ...brandSettings, timezone: e.target.value })}
-                                                className="w-full bg-white/5 border border-primary/10 rounded-2xl p-4 text-sm font-bold text-slate-300 focus:ring-primary outline-none appearance-none"
+                                                className="w-full bg-white/5 border border-primary/10 rounded-2xl p-4 text-sm font-bold text-slate-300 focus:ring-primary outline-none appearance-none cursor-pointer"
                                             >
-                                                <option>Asia/Kolkata</option>
-                                                <option>America/New_York</option>
-                                                <option>Europe/London</option>
-                                                <option>Asia/Tokyo</option>
+                                                <option className="bg-slate-900 text-white">Asia/Kolkata</option>
+                                                <option className="bg-slate-900 text-white">America/New_York</option>
+                                                <option className="bg-slate-900 text-white">Europe/London</option>
+                                                <option className="bg-slate-900 text-white">Asia/Tokyo</option>
+                                                <option className="bg-slate-900 text-white">Australia/Sydney</option>
                                             </select>
                                         </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-white">Website URL</label>
+                                            <input
+                                                type="url"
+                                                value={brandSettings.website || ''}
+                                                onChange={(e) => setBrandSettings({ ...brandSettings, website: e.target.value })}
+                                                placeholder="https://yourbrand.com"
+                                                className="w-full bg-white/5 border border-primary/10 rounded-2xl p-4 text-sm font-medium text-slate-200 focus:ring-primary focus:border-primary outline-none"
+                                            />
+                                        </div>
+                                        <div className="space-y-3">
+                                            <label className="text-[11px] font-black uppercase tracking-widest text-white">Contact Number</label>
+                                            <input
+                                                type="text"
+                                                value={brandSettings.phone_contact || ''}
+                                                onChange={(e) => setBrandSettings({ ...brandSettings, phone_contact: e.target.value })}
+                                                placeholder="+1 (555) 000-0000"
+                                                className="w-full bg-white/5 border border-primary/10 rounded-2xl p-4 text-sm font-medium text-slate-200 focus:ring-primary focus:border-primary outline-none"
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-3">
-                                        <label className="text-[11px] font-black uppercase tracking-widest text-white">Business Description</label>
+
+                                    <div className="space-y-3 mt-8">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-white">Business Address / Location</label>
+                                        <input
+                                            type="text"
+                                            value={brandSettings.address || ''}
+                                            onChange={(e) => setBrandSettings({ ...brandSettings, address: e.target.value })}
+                                            placeholder="123 Creator Lane, Suite 100, San Francisco, CA"
+                                            className="w-full bg-white/5 border border-primary/10 rounded-2xl p-4 text-sm font-medium text-slate-200 focus:ring-primary focus:border-primary outline-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3 mt-8">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-white">Key Products & Services</label>
+                                        <textarea
+                                            value={brandSettings.products_services || ''}
+                                            onChange={(e) => setBrandSettings({ ...brandSettings, products_services: e.target.value })}
+                                            placeholder="1. Social Media Management\n2. Branding Consultation\nHelps the AI understand what you sell..."
+                                            className="w-full bg-white/5 border border-primary/10 rounded-2xl p-4 text-sm font-medium text-slate-200 focus:ring-primary focus:border-primary outline-none h-28 resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-3 mt-8">
+                                        <label className="text-[11px] font-black uppercase tracking-widest text-white">Business Description (Mission / Vision)</label>
                                         <textarea
                                             value={brandSettings.description || ''}
                                             onChange={(e) => setBrandSettings({ ...brandSettings, description: e.target.value })}

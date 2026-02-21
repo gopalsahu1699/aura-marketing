@@ -87,6 +87,10 @@ CREATE TABLE brand_settings (
     business_email TEXT NOT NULL DEFAULT 'hello@auramarketing.io',
     industry TEXT NOT NULL DEFAULT 'Marketing & Advertising',
     timezone TEXT NOT NULL DEFAULT 'Asia/Kolkata',
+    website TEXT,
+    phone_contact TEXT,
+    address TEXT,
+    products_services TEXT,
     description TEXT,
     primary_logo TEXT, -- URL
     secondary_mark TEXT, -- URL
@@ -105,6 +109,7 @@ CREATE TABLE user_preferences (
     push_notifications BOOLEAN DEFAULT true,
     weekly_digest BOOLEAN DEFAULT false,
     ai_suggestions BOOLEAN DEFAULT true,
+    api_keys JSONB DEFAULT '{}'::JSONB,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
 
@@ -274,13 +279,21 @@ BEGIN
   -- =====================
   -- 5. BRAND SETTINGS (Initial)
   -- =====================
-  INSERT INTO brand_settings (user_id, brand_name, business_email, industry, timezone, description, ai_persona, target_audience, brand_font)
+  INSERT INTO brand_settings (
+    user_id, brand_name, business_email, industry, timezone, 
+    website, phone_contact, address, products_services,
+    description, ai_persona, target_audience, brand_font
+  )
   VALUES (
     target_user_id,
     'Aura Marketing',
     'hello@auramarketing.io',
     'Marketing & Advertising',
     'Asia/Kolkata',
+    'https://auramarketing.io',
+    '+1 (555) 123-4567',
+    '123 Digital Ave, Tech District, San Francisco, CA 94105',
+    '1. AI Social Media Management\n2. Brand Identity Kit\n3. Automated Ad Generation',
     'AI-powered marketing platform for creators and enterprises',
     'Professional',
     'Digital Creators & SMBs',
@@ -291,8 +304,8 @@ BEGIN
   -- =====================
   -- 6. USER PREFERENCES
   -- =====================
-  INSERT INTO user_preferences (user_id, email_notifications, push_notifications, weekly_digest, ai_suggestions)
-  VALUES (target_user_id, true, true, false, true)
+  INSERT INTO user_preferences (user_id, email_notifications, push_notifications, weekly_digest, ai_suggestions, api_keys)
+  VALUES (target_user_id, true, true, false, true, '{}'::JSONB)
   ON CONFLICT (user_id) DO NOTHING;
 
   RAISE NOTICE 'Seeding complete for user: %', target_user_id;
