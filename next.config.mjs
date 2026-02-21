@@ -1,10 +1,9 @@
-const isVercel = process.env.VERCEL === '1' || process.env.NODE_ENV === 'production' && !process.env.STATIC_EXPORT;
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     /* config options here */
-    output: isVercel ? undefined : 'export', // Required for Capacitor, but disabled on Vercel
-    distDir: isVercel ? '.next' : 'out',
+    // Only use static export when explicitly building for Capacitor
+    output: process.env.BUILD_MOBILE === '1' ? 'export' : undefined,
+    distDir: process.env.BUILD_MOBILE === '1' ? 'out' : '.next',
     images: {
         unoptimized: true, // Required for Capacitor
     },

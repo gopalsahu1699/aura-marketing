@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+
 import {
     Globe, Instagram, Facebook, Linkedin, Youtube,
     Link as LinkIcon, CheckCircle2, Clock, ShieldCheck,
@@ -28,30 +30,26 @@ interface Platform {
     description: string;
 }
 
-export default function ConnectionsPage() {
+function ConnectionsContent() {
     const mockPlatforms: Platform[] = [
         {
-            id: 'insta',
+            id: 'instagram',
             name: 'Instagram Business',
             icon: <Instagram size={24} />,
             color: 'bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600',
-            status: 'connected',
-            handle: '@auramarketing_official',
-            lastSynced: '5 mins ago',
+            status: 'disconnected',
             description: 'Direct publishing & reel analytics integration.'
         },
         {
-            id: 'fb',
+            id: 'facebook',
             name: 'Facebook Ads',
             icon: <Facebook size={24} />,
             color: 'bg-[#1877F2]',
-            status: 'connected',
-            handle: 'Aura Marketing Page',
-            lastSynced: '1h ago',
+            status: 'disconnected',
             description: 'Enterprise ad manager & lead sync.'
         },
         {
-            id: 'li',
+            id: 'linkedin',
             name: 'LinkedIn Company',
             icon: <Linkedin size={24} />,
             color: 'bg-[#0A66C2]',
@@ -59,11 +57,11 @@ export default function ConnectionsPage() {
             description: 'Professional networking & B2B reach.'
         },
         {
-            id: 'yt',
+            id: 'youtube',
             name: 'YouTube Enterprise',
             icon: <Youtube size={24} />,
             color: 'bg-[#FF0000]',
-            status: 'pending',
+            status: 'disconnected',
             description: 'Video delivery & channel growth engine.'
         },
     ];
@@ -72,7 +70,26 @@ export default function ConnectionsPage() {
     const [isConnecting, setIsConnecting] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [sdkTooltip, setSdkTooltip] = useState(false);
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const supabase = createBrowserClient();
+    const searchParams = useSearchParams();
+
+    // Handle OAuth return
+    useEffect(() => {
+        const connected = searchParams.get('connected');
+        const error = searchParams.get('error');
+        if (connected) {
+            setToast({ type: 'success', message: `${connected.charAt(0).toUpperCase() + connected.slice(1)} connected successfully!` });
+            setTimeout(() => setToast(null), 5000);
+            // Remove query params without page reload
+            window.history.replaceState({}, '', '/dashboard/connections');
+        } else if (error) {
+            setToast({ type: 'error', message: decodeURIComponent(error) });
+            setTimeout(() => setToast(null), 7000);
+            window.history.replaceState({}, '', '/dashboard/connections');
+        }
+    }, [searchParams]);
+
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -88,51 +105,36 @@ export default function ConnectionsPage() {
             try {
                 const { data, error } = await supabase.from('connections_platforms').select('*').order('id');
                 if (error) throw error;
-                if (data && data.length > 0) {
-                    setPlatforms(data.map((row: any) => ({
-                        id: row.platform_id,
-                        name: row.name,
-                        icon: iconMap[row.icon_name] || <LinkIcon size={24} />,
-                        color: row.color,
-                        status: row.status,
-                        handle: row.handle,
-                        lastSynced: row.last_synced,
-                        description: row.description
-                    })));
+                if (data) {
+                    // Start with mockPlatforms as base
+                    const mergedPlatforms = mockPlatforms.map(basePlatform => {
+                        const dbMatch = data.find((row: any) => row.platform_id === basePlatform.id);
+                        if (dbMatch) {
+                            return {
+                                ...basePlatform,
+                                status: dbMatch.status?.toLowerCase() === 'connected' ? 'connected' : 'disconnected' as Platform['status'],
+                                handle: dbMatch.handle || undefined,
+                                lastSynced: dbMatch.last_synced ? new Date(dbMatch.last_synced).toLocaleString() : undefined,
+                            };
+                        }
+                        return basePlatform;
+                    });
+                    setPlatforms(mergedPlatforms);
                 }
+                // else: keep mockPlatforms (all disconnected)
             } catch (err) {
-                console.warn('Supabase fetch failed, falling back to mock data', err);
+                console.warn('Using default platform list', err);
             }
         };
         fetchPlatforms();
     }, []);
 
-    const handleConnect = async (id: string) => {
+    const handleConnect = (id: string) => {
         setIsConnecting(id);
-        // Simulate OAuth flow
-        setTimeout(async () => {
-            const updated = { ...platforms.find(p => p.id === id)!, status: 'connected' as const, handle: 'Verified Account', lastSynced: new Date().toISOString() };
-            setPlatforms(prev => prev.map(p => p.id === id ? updated : p));
-            // Persist to Supabase
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    await supabase.from('connections_platforms').upsert({
-                        user_id: user.id,
-                        platform_id: id,
-                        name: updated.name,
-                        status: 'Connected',
-                        handle: updated.handle,
-                        last_synced: updated.lastSynced,
-                        description: updated.description,
-                        color: updated.color,
-                        icon_name: id,
-                    }, { onConflict: 'user_id,platform_id' });
-                }
-            } catch (e) { console.warn('Supabase persist failed', e); }
-            setIsConnecting(null);
-        }, 2000);
+        // Redirect to real OAuth flow — page will come back to ?connected=[platform] on success
+        window.location.href = `/api/oauth/${id}/start`;
     };
+
 
     const handleDisconnect = async (id: string) => {
         if (!confirm('Disconnect this platform? You can reconnect anytime.')) return;
@@ -141,14 +143,27 @@ export default function ConnectionsPage() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 await supabase.from('connections_platforms')
-                    .update({ status: 'Disconnected', handle: null, last_synced: null })
+                    .update({ status: 'Disconnected', handle: null, last_synced: null, access_token: null, refresh_token: null, token_expires_at: null })
                     .eq('user_id', user.id).eq('platform_id', id);
             }
         } catch (e) { console.warn('Supabase update failed', e); }
     };
 
+
     return (
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
+            {/* OAuth Toast notification */}
+            {toast && (
+                <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border text-sm font-black uppercase tracking-widest transition-all animate-in slide-in-from-top-2 ${toast.type === 'success'
+                    ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+                    : 'bg-red-500/20 border-red-500/30 text-red-400'
+                    }`}>
+                    {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                    {toast.message}
+                    <button onClick={() => setToast(null)} className="ml-2 opacity-60 hover:opacity-100"><X size={14} /></button>
+                </div>
+            )}
+
             {/* Header */}
             <header className="h-16 lg:h-20 border-b border-primary/10 flex items-center justify-between px-4 md:px-8 bg-background/50 backdrop-blur-md shrink-0 sticky top-0 z-20">
                 <div className="flex items-center gap-4">
@@ -235,8 +250,8 @@ export default function ConnectionsPage() {
                                 <h3 className="text-xl font-black uppercase italic tracking-tight">Active Interfaces</h3>
                             </div>
                             <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                <Activity size={12} className="text-emerald-500" />
-                                Status: Operational
+                                <span className={`w-2 h-2 rounded-full ${platforms.some(p => p.status === 'connected') ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+                                {platforms.filter(p => p.status === 'connected').length} / {platforms.length} Connected
                             </div>
                         </div>
 
@@ -324,10 +339,10 @@ export default function ConnectionsPage() {
             <div className="h-12 border-t border-primary/10 bg-white/50 dark:bg-primary/5 backdrop-blur-md flex items-center justify-center px-8">
                 <div className="flex items-center gap-12 overflow-hidden whitespace-nowrap">
                     {[
-                        { label: "Uptime", val: "99.98%" },
-                        { label: "Latency", val: "12ms" },
-                        { label: "Data Flow", val: "2.4 GB/s" },
-                        { label: "Neural Sync", val: "Verified" }
+                        { label: "Connected", val: `${platforms.filter(p => p.status === 'connected').length} / ${platforms.length}` },
+                        { label: "OAuth", val: "2.0 Secure" },
+                        { label: "Protocol", val: "REST API" },
+                        { label: "Status", val: platforms.some(p => p.status === 'connected') ? 'Active' : 'Standby' }
                     ].map((s, i) => (
                         <div key={i} className="flex items-center gap-3">
                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{s.label}</span>
@@ -337,5 +352,13 @@ export default function ConnectionsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ConnectionsPage() {
+    return (
+        <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin text-primary" size={32} /></div>}>
+            <ConnectionsContent />
+        </Suspense>
     );
 }

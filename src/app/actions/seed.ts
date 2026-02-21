@@ -111,13 +111,12 @@ export async function seedUserAnalytics() {
         },
     ]);
 
-    // Seed connections
+    // Seed connections (all Disconnected — user connects via OAuth in the Connections Hub)
     await supabase.from("connections_platforms").insert([
-        { user_id: userId, platform_id: "instagram", name: "Instagram", color: "#E1306C", status: "Connected", handle: "@auramarketing", last_synced: new Date().toISOString(), description: "Visual storytelling & Reels", icon_name: "Instagram" },
-        { user_id: userId, platform_id: "facebook", name: "Facebook", color: "#1877F2", status: "Connected", handle: "Aura Marketing", last_synced: new Date().toISOString(), description: "Community & paid ads", icon_name: "Facebook" },
-        { user_id: userId, platform_id: "twitter", name: "Twitter / X", color: "#000000", status: "Connected", handle: "@auramarketing", last_synced: new Date().toISOString(), description: "Real-time brand voice", icon_name: "Twitter" },
-        { user_id: userId, platform_id: "linkedin", name: "LinkedIn", color: "#0A66C2", status: "Disconnected", handle: null, last_synced: null, description: "B2B & professional network", icon_name: "Linkedin" },
-        { user_id: userId, platform_id: "tiktok", name: "TikTok", color: "#000000", status: "Disconnected", handle: null, last_synced: null, description: "Short-form viral content", icon_name: "Video" },
+        { user_id: userId, platform_id: "instagram", name: "Instagram Business", color: "bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600", status: "Disconnected", handle: null, last_synced: null, description: "Direct publishing & reel analytics integration.", icon_name: "Instagram" },
+        { user_id: userId, platform_id: "facebook", name: "Facebook Ads", color: "bg-[#1877F2]", status: "Disconnected", handle: null, last_synced: null, description: "Enterprise ad manager & lead sync.", icon_name: "Facebook" },
+        { user_id: userId, platform_id: "linkedin", name: "LinkedIn Company", color: "bg-[#0A66C2]", status: "Disconnected", handle: null, last_synced: null, description: "Professional networking & B2B reach.", icon_name: "Linkedin" },
+        { user_id: userId, platform_id: "youtube", name: "YouTube Enterprise", color: "bg-[#FF0000]", status: "Disconnected", handle: null, last_synced: null, description: "Video delivery & channel growth engine.", icon_name: "Youtube" },
     ]);
 
     // Seed brand settings & preferences (ignore if exists)

@@ -1,31 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Megaphone, Plus, Search, BarChart3, Target,
     Calendar, Eye, TrendingUp, Sparkles, CheckCircle2,
-    Clock, PlayCircle, PauseCircle, Loader2, Zap, Globe
+    Clock, PlayCircle, PauseCircle, Loader2, Zap, Globe, Brain
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-
-const MOCK_CAMPAIGNS = [
-    {
-        id: 1, name: "Summer Launch 2024", status: "active", platform: "Instagram",
-        budget: "$2,400", spent: "$1,284", reach: "45.2k", engagement: "6.8%", progress: 54
-    },
-    {
-        id: 2, name: "Brand Awareness Drive", status: "scheduled", platform: "Facebook",
-        budget: "$1,800", spent: "$0", reach: "--", engagement: "--", progress: 0
-    },
-    {
-        id: 3, name: "Product Launch Q4", status: "paused", platform: "LinkedIn",
-        budget: "$3,200", spent: "$2,900", reach: "12.1k", engagement: "4.2%", progress: 90
-    },
-    {
-        id: 4, name: "Holiday Special Campaign", status: "completed", platform: "All",
-        budget: "$5,000", spent: "$4,978", reach: "112k", engagement: "8.1%", progress: 100
-    },
-];
+import { getCampaignsAIData, CampaignsAIData, CampaignItem } from '@/app/actions/ai';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
     active: { label: "Active", color: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20", icon: <PlayCircle size={12} /> },
@@ -34,16 +16,49 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
     completed: { label: "Completed", color: "bg-slate-500/10 text-slate-400 border-slate-500/20", icon: <CheckCircle2 size={12} /> },
 };
 
+const CACHE_KEY = 'aura_campaigns_data';
+const CACHE_TTL = 10 * 60 * 1000;
+
 export default function CampaignsPage() {
     const [search, setSearch] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [loadingAI, setLoadingAI] = useState(true);
+    const [aiData, setAiData] = useState<CampaignsAIData | null>(null);
     const router = useRouter();
 
-    const filtered = MOCK_CAMPAIGNS.filter(c => {
+    useEffect(() => {
+        const load = async () => {
+            setLoadingAI(true);
+            try {
+                const cached = sessionStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { data, ts } = JSON.parse(cached);
+                    if (Date.now() - ts < CACHE_TTL) {
+                        setAiData(data);
+                        setLoadingAI(false);
+                        return;
+                    }
+                }
+                const result = await getCampaignsAIData();
+                setAiData(result.data);
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: result.data, ts: Date.now() }));
+            } catch (err) {
+                console.warn('Campaigns AI fetch failed', err);
+            } finally {
+                setLoadingAI(false);
+            }
+        };
+        load();
+    }, []);
+
+    const campaigns = aiData?.campaigns ?? [];
+    const filtered = campaigns.filter(c => {
         const matchSearch = c.name.toLowerCase().includes(search.toLowerCase());
         const matchFilter = activeFilter === 'all' || c.status === activeFilter;
         return matchSearch && matchFilter;
     });
+
+    const summary = aiData?.summary;
 
     return (
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
@@ -59,7 +74,7 @@ export default function CampaignsPage() {
                     </div>
                 </div>
                 <button
-                    onClick={() => document.getElementById('campaigns-list')?.scrollIntoView({ behavior: 'smooth' })}
+                    onClick={() => router.push('/dashboard/campaigns/new')}
                     className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
                 >
                     <Plus size={16} /> New Campaign
@@ -70,15 +85,25 @@ export default function CampaignsPage() {
                 {/* Summary Stats */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { label: "Total Campaigns", value: "4", icon: <Megaphone size={20} />, color: "text-primary" },
-                        { label: "Active Now", value: "1", icon: <PlayCircle size={20} />, color: "text-emerald-400" },
-                        { label: "Total Reach", value: "169.3k", icon: <Eye size={20} />, color: "text-blue-400" },
-                        { label: "Avg Engagement", value: "6.4%", icon: <TrendingUp size={20} />, color: "text-amber-400" },
+                        { label: "Total Campaigns", value: summary?.total?.toString() ?? "—", icon: <Megaphone size={20} />, color: "text-primary" },
+                        { label: "Active Now", value: summary?.active?.toString() ?? "—", icon: <PlayCircle size={20} />, color: "text-emerald-400" },
+                        { label: "Total Reach", value: summary?.total_reach ?? "—", icon: <Eye size={20} />, color: "text-blue-400" },
+                        { label: "Avg Engagement", value: summary?.avg_engagement ?? "—", icon: <TrendingUp size={20} />, color: "text-amber-400" },
                     ].map((s, i) => (
                         <div key={i} className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 group hover:border-primary/30 transition-all">
-                            <div className={`mb-3 ${s.color}`}>{s.icon}</div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{s.label}</p>
-                            <h3 className="text-2xl font-black italic tracking-tighter text-white">{s.value}</h3>
+                            {loadingAI ? (
+                                <div className="space-y-3 animate-pulse">
+                                    <div className="h-5 w-5 bg-primary/20 rounded" />
+                                    <div className="h-3 bg-white/5 rounded w-3/4" />
+                                    <div className="h-7 bg-white/5 rounded w-1/2" />
+                                </div>
+                            ) : (
+                                <>
+                                    <div className={`mb-3 ${s.color}`}>{s.icon}</div>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{s.label}</p>
+                                    <h3 className="text-2xl font-black italic tracking-tighter text-white">{s.value}</h3>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -108,8 +133,31 @@ export default function CampaignsPage() {
                 </div>
 
                 {/* Campaign List */}
-                <div className="space-y-4">
-                    {filtered.length === 0 ? (
+                <div id="campaigns-list" className="space-y-4">
+                    {loadingAI ? (
+                        [1, 2, 3, 4].map(i => (
+                            <div key={i} className="bg-primary/5 border border-primary/10 rounded-[2rem] p-6 md:p-8 animate-pulse">
+                                <div className="flex flex-col md:flex-row md:items-center gap-6">
+                                    <div className="flex-1 space-y-3">
+                                        <div className="flex gap-3 flex-wrap">
+                                            <div className="h-5 bg-white/5 rounded w-48" />
+                                            <div className="h-5 bg-primary/10 rounded w-20" />
+                                        </div>
+                                        <div className="h-3 bg-white/5 rounded w-56" />
+                                        <div className="h-1.5 bg-white/5 rounded-full w-full" />
+                                    </div>
+                                    <div className="flex gap-6">
+                                        {[1, 2, 3].map(j => (
+                                            <div key={j} className="text-center space-y-1">
+                                                <div className="h-2 bg-white/5 rounded w-12 mx-auto" />
+                                                <div className="h-5 bg-white/5 rounded w-16 mx-auto" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    ) : filtered.length === 0 ? (
                         <div className="text-center py-20 text-slate-400">
                             <Megaphone size={40} className="mx-auto mb-4 opacity-20" />
                             <p className="font-bold uppercase tracking-widest text-sm">No campaigns found</p>
@@ -132,6 +180,13 @@ export default function CampaignsPage() {
                                             <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${c.progress}%` }} />
                                         </div>
                                         <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest mt-1.5">{c.progress}% budget utilized</p>
+                                        {/* AI insight badge */}
+                                        {c.insight && (
+                                            <div className="flex items-start gap-2 mt-4 p-3 bg-primary/5 border border-primary/10 rounded-2xl">
+                                                <Brain size={12} className="text-primary shrink-0 mt-0.5" />
+                                                <p className="text-[10px] font-medium text-slate-400 leading-relaxed italic">{c.insight}</p>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="flex gap-6 shrink-0">
                                         <div className="text-center">

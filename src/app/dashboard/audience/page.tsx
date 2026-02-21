@@ -5,60 +5,85 @@ import {
     Users, UserPlus, UserMinus, Zap,
     Download, Calendar, Globe, Target,
     TrendingUp, ArrowRight, Instagram,
-    Facebook, Twitter, Info, BarChart3,
-    Sparkles
+    Facebook, Twitter, BarChart3,
+    Sparkles, Loader2, Brain
 } from 'lucide-react';
-import { createBrowserClient } from '@/lib/supabase-client';
 import { useRouter } from 'next/navigation';
+import { getAudienceAIData, AudienceAIData } from '@/app/actions/ai';
+
+const CACHE_KEY = 'aura_audience_data';
+const CACHE_TTL = 10 * 60 * 1000;
 
 export default function AudienceInsightsPage() {
     const router = useRouter();
-    const supabase = createBrowserClient();
     const [activePlatform, setActivePlatform] = useState('All');
-    const [dateRange, setDateRange] = useState('Oct 2023 - Current');
+    const [dateRange, setDateRange] = useState('Last 30 Days');
     const [showExportSuccess, setShowExportSuccess] = useState(false);
-    const [audienceData, setAudienceData] = useState<any>(null);
-    const dateOptions = ['Oct 2023 - Current', 'Last 30 Days', 'Last 90 Days', 'This Year'];
+    const [loadingAI, setLoadingAI] = useState(true);
+    const [aiData, setAiData] = useState<AudienceAIData | null>(null);
+    const dateOptions = ['Last 30 Days', 'Last 90 Days', 'This Year', 'Oct 2023 - Current'];
 
     useEffect(() => {
         const load = async () => {
+            setLoadingAI(true);
             try {
-                const { data } = await supabase
-                    .from('audience_insights')
-                    .select('data')
-                    .eq('category', 'audience')
-                    .single();
-                if (data?.data) setAudienceData(data.data);
-            } catch { /* fallback to defaults */ }
+                const cached = sessionStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { data, ts } = JSON.parse(cached);
+                    if (Date.now() - ts < CACHE_TTL) {
+                        setAiData(data);
+                        setLoadingAI(false);
+                        return;
+                    }
+                }
+                const result = await getAudienceAIData();
+                setAiData(result.data);
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: result.data, ts: Date.now() }));
+            } catch (err) {
+                console.warn('Audience AI fetch failed', err);
+            } finally {
+                setLoadingAI(false);
+            }
         };
         load();
     }, []);
 
+    const ai = aiData;
+
     const stats = [
-        { label: "Total Audience", value: audienceData?.total || "85,420", change: "+2.4%", icon: <Users size={20} /> },
-        { label: "New Followers", value: audienceData?.new_followers || "+1,248", change: "+5.1%", icon: <UserPlus size={20} /> },
-        { label: "Churn Rate", value: audienceData?.churn_rate || "0.82%", change: "-0.2%", icon: <UserMinus size={20} /> },
-        { label: "Active Users", value: audienceData?.active_users || "12,504", change: "+1.8%", icon: <Zap size={20} /> },
+        { label: "Total Audience", value: ai?.stats.total ?? "87,240", change: ai?.stat_changes.total ?? "+3.1%", icon: <Users size={20} /> },
+        { label: "New Followers", value: ai?.stats.new_followers ?? "+1,520", change: ai?.stat_changes.new_followers ?? "+6.2%", icon: <UserPlus size={20} /> },
+        { label: "Churn Rate", value: ai?.stats.churn_rate ?? "0.74%", change: ai?.stat_changes.churn_rate ?? "-0.3%", icon: <UserMinus size={20} /> },
+        { label: "Active Users", value: ai?.stats.active_users ?? "13,180", change: ai?.stat_changes.active_users ?? "+2.4%", icon: <Zap size={20} /> },
     ];
 
-    const platforms = audienceData?.platforms || [
-        { name: "Instagram", val: 75, count: "45k" },
-        { name: "Facebook", val: 55, count: "28k" },
-        { name: "Twitter", val: 35, count: "12k" },
+    const platforms = ai?.platforms ?? [
+        { name: "Instagram", val: 78, count: "47k" },
+        { name: "Facebook", val: 52, count: "26k" },
+        { name: "Twitter", val: 32, count: "14k" },
     ];
 
-    const interests = audienceData?.interests || ['Generative AI', 'SaaS Tech', 'Sustainability', 'UX Design', 'Digital Art', 'Remote Work'];
+    const interests = ai?.interests ?? ['Generative AI', 'SaaS Tools', 'Sustainability', 'UX Design', 'Digital Marketing', 'Remote Work'];
+    const growthBars = ai?.growthBars ?? [42, 58, 51, 70, 88, 74, 82];
+    const peakDay = ai?.peakDay ?? 4;
+    const geo = ai?.geo ?? [
+        { country: "United States", val: 44 },
+        { country: "United Kingdom", val: 26 },
+        { country: "India", val: 16 },
+    ];
+    const targeting = ai?.targeting ?? [
+        { title: "Retarget High-Intent Segment", desc: "High engagement detected. Start video sequence.", btn: "Launch Campaign", href: '/dashboard/campaigns' },
+        { title: "Churn Risk Recovery", desc: "Churn up 0.5%. AI recommends a re-engagement carousel.", btn: "Create Content", href: '/dashboard/content' },
+    ];
 
     const handleExport = () => {
         const rows = [
             ['Metric', 'Value'],
-            ['Total Audience', audienceData?.total || '85,420'],
-            ['New Followers', audienceData?.new_followers || '+1,248'],
-            ['Churn Rate', audienceData?.churn_rate || '0.82%'],
-            ['Active Users', audienceData?.active_users || '12,504'],
-            ['Primary Location', audienceData?.locations?.[0]?.city || 'Mumbai, India'],
-            ['Age Range', audienceData?.age_range || '25-34'],
-            ['Top Gender', audienceData?.top_gender || '62% Female'],
+            ['Total Audience', ai?.stats.total ?? '87,240'],
+            ['New Followers', ai?.stats.new_followers ?? '+1,520'],
+            ['Churn Rate', ai?.stats.churn_rate ?? '0.74%'],
+            ['Active Users', ai?.stats.active_users ?? '13,180'],
+            ['Top Interest', interests[0] ?? 'Generative AI'],
         ];
         const csv = rows.map(r => r.join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
@@ -71,6 +96,7 @@ export default function AudienceInsightsPage() {
         setShowExportSuccess(true);
         setTimeout(() => setShowExportSuccess(false), 2500);
     };
+
     return (
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-background">
             {/* Header */}
@@ -105,7 +131,7 @@ export default function AudienceInsightsPage() {
                 </div>
             </header>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 no-scrollbar">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-8 no-scrollbar space-y-6 md:space-y-8">
                 {/* Summary Stats */}
                 <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {stats.map((stat, i) => (
@@ -115,19 +141,27 @@ export default function AudienceInsightsPage() {
                                 <div className="p-3 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
                                     {stat.icon}
                                 </div>
-                                <span className={`text-[10px] font-black px-2 py-1 rounded-full ${stat.change.startsWith('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-orange-500/10 text-orange-500'}`}>
-                                    {stat.change}
-                                </span>
+                                {loadingAI ? (
+                                    <div className="h-5 w-12 bg-white/5 rounded-full animate-pulse" />
+                                ) : (
+                                    <span className={`text-[10px] font-black px-2 py-1 rounded-full ${stat.change.startsWith('+') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                                        {stat.change}
+                                    </span>
+                                )}
                             </div>
                             <div className="relative z-10">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{stat.label}</p>
-                                <h3 className="text-3xl font-black italic tracking-tighter text-white">{stat.value}</h3>
+                                {loadingAI ? (
+                                    <div className="h-8 bg-white/5 rounded-xl animate-pulse w-3/4" />
+                                ) : (
+                                    <h3 className="text-3xl font-black italic tracking-tighter text-white">{stat.value}</h3>
+                                )}
                             </div>
                         </div>
                     ))}
                 </section>
 
-                {/* Main Growth Chart */}
+                {/* Growth Chart */}
                 <section className="bg-primary/5 border border-primary/10 rounded-2xl md:rounded-[2.5rem] p-4 sm:p-6 md:p-10 flex flex-col shadow-sm">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-10">
                         <div>
@@ -148,15 +182,19 @@ export default function AudienceInsightsPage() {
                     </div>
 
                     <div className="h-64 w-full relative group flex items-end justify-between gap-3 px-2">
-                        {[40, 55, 45, 65, 80, 70, 85].map((h, i) => (
+                        {loadingAI ? (
+                            <div className="w-full h-full bg-primary/5 rounded-2xl animate-pulse flex items-center justify-center">
+                                <Loader2 size={24} className="animate-spin text-primary/40" />
+                            </div>
+                        ) : growthBars.map((h, i) => (
                             <div key={i} className="flex-1 bg-white/5 rounded-2xl h-[100%] relative overflow-hidden group/bar border border-primary/5 hover:border-primary/20 transition-all">
                                 <div
                                     style={{ height: `${h}%` }}
-                                    className={`absolute inset-x-0 bottom-0 ${i === 4 ? 'bg-gradient-to-t from-primary to-purple-500' : 'bg-primary/10'} rounded-2xl transition-all duration-700 group-hover/bar:brightness-125 shadow-[0_0_20px_rgba(140,43,238,0.2)]`}
+                                    className={`absolute inset-x-0 bottom-0 ${i === peakDay ? 'bg-gradient-to-t from-primary to-purple-500' : 'bg-primary/10'} rounded-2xl transition-all duration-700 group-hover/bar:brightness-125 shadow-[0_0_20px_rgba(140,43,238,0.2)]`}
                                 >
                                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/bar:translate-x-full transition-transform duration-1000"></div>
                                 </div>
-                                {i === 4 && <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-[0.2em] shadow-xl">Peak Day</div>}
+                                {i === peakDay && <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white text-primary text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-[0.2em] shadow-xl">Peak Day</div>}
                             </div>
                         ))}
                     </div>
@@ -167,7 +205,7 @@ export default function AudienceInsightsPage() {
 
                 {/* Demographics & Interests Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-8">
-                    {/* Demographics */}
+                    {/* Geographics */}
                     <div className="bg-primary/5 border border-primary/10 rounded-[2.5rem] p-8 shadow-sm group hover:border-primary/20 transition-all">
                         <div className="flex justify-between items-center mb-8">
                             <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Geographics</h3>
@@ -187,11 +225,14 @@ export default function AudienceInsightsPage() {
                                 <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-primary animate-pulse" size={24} />
                             </div>
                             <div className="space-y-5">
-                                {[
-                                    { country: "United States", val: 42 },
-                                    { country: "United Kingdom", val: 28 },
-                                    { country: "Germany", val: 15 }
-                                ].map(c => (
+                                {loadingAI ? (
+                                    [1, 2, 3].map(i => (
+                                        <div key={i} className="space-y-2 animate-pulse">
+                                            <div className="h-3 bg-white/5 rounded w-full" />
+                                            <div className="h-1.5 bg-white/5 rounded-full w-full" />
+                                        </div>
+                                    ))
+                                ) : geo.map(c => (
                                     <div key={c.country} className="group/item">
                                         <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 group-hover/item:text-slate-300 transition-colors">
                                             <span>{c.country}</span>
@@ -206,7 +247,7 @@ export default function AudienceInsightsPage() {
                         </div>
                     </div>
 
-                    {/* Interests AI */}
+                    {/* Interest Hub */}
                     <div className="bg-primary rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-primary/20">
                         <Sparkles className="absolute -right-10 -top-10 w-48 h-48 text-white/5" />
                         <div className="relative z-10">
@@ -215,15 +256,20 @@ export default function AudienceInsightsPage() {
                                 <span className="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded uppercase backdrop-blur-md">AI Analyzed</span>
                             </div>
                             <div className="flex flex-wrap gap-2 mb-10">
-                                {interests.map((tag: string) => (
+                                {loadingAI ? (
+                                    [1, 2, 3, 4, 5, 6].map(i => (
+                                        <div key={i} className="h-7 bg-white/10 rounded-xl animate-pulse" style={{ width: `${60 + i * 15}px` }} />
+                                    ))
+                                ) : interests.map((tag: string) => (
                                     <div key={tag} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-default">
                                         {tag}
                                     </div>
                                 ))}
                             </div>
-                            <div className="p-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl">
+                            <div className="p-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl flex items-start gap-3">
+                                <Brain size={14} className="text-white/70 shrink-0 mt-0.5" />
                                 <p className="text-xs font-medium leading-relaxed italic opacity-90">
-                                    "AI identifies a 15% increase in affinity for #GreenTech among your newest followers this week."
+                                    &quot;{loadingAI ? 'Loading AI insight...' : (ai?.interest_insight ?? 'AI identifies a 15% increase in affinity for #GreenTech among your newest followers.')}&quot;
                                 </p>
                             </div>
                         </div>
@@ -233,7 +279,17 @@ export default function AudienceInsightsPage() {
                     <div className="bg-primary/5 border border-primary/10 rounded-[2.5rem] p-8 shadow-sm group hover:border-primary/20 transition-all">
                         <h3 className="text-sm font-black uppercase tracking-[0.2em] mb-8 text-white">Platforms</h3>
                         <div className="space-y-6">
-                            {platforms.map((p: any) => (
+                            {loadingAI ? (
+                                [1, 2, 3].map(i => (
+                                    <div key={i} className="flex items-center gap-4 animate-pulse">
+                                        <div className="w-10 h-10 bg-primary/10 rounded-2xl" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="h-3 bg-white/5 rounded w-2/3" />
+                                            <div className="h-1.5 bg-white/5 rounded-full w-full" />
+                                        </div>
+                                    </div>
+                                ))
+                            ) : platforms.map((p: { name: string; val: number; count: string }) => (
                                 <div key={p.name} className="flex items-center gap-4 group/item">
                                     <div className="p-2.5 rounded-2xl bg-primary/10 text-primary group-hover/item:bg-primary group-hover/item:text-white transition-all">
                                         {p.name === 'Instagram' ? <Instagram size={18} /> : p.name === 'Facebook' ? <Facebook size={18} /> : <Twitter size={18} />}
@@ -259,11 +315,19 @@ export default function AudienceInsightsPage() {
                         <div className="p-2 bg-primary/10 rounded-lg text-primary"><Target size={20} /></div>
                         <h3 className="text-xl font-black uppercase italic tracking-tight">AI Smart Targeting</h3>
                     </div>
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-                        {[
-                            { title: "Retarget London Tech", desc: "High engagement detected. Start video sequence.", btn: "Launch Campaign", href: '/dashboard/campaigns' },
-                            { title: "FB Churn Recovery", desc: "Churn up 0.5%. AI recommends a carousel.", btn: "Create Content", href: '/dashboard/content' }
-                        ].map((card, i) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+                        {loadingAI ? (
+                            [1, 2].map(i => (
+                                <div key={i} className="bg-primary/5 border border-primary/10 rounded-[2.5rem] p-8 animate-pulse">
+                                    <div className="w-12 h-12 bg-primary/20 rounded-2xl mb-6" />
+                                    <div className="space-y-3">
+                                        <div className="h-4 bg-white/5 rounded w-3/4" />
+                                        <div className="h-3 bg-white/5 rounded w-full" />
+                                        <div className="h-3 bg-white/5 rounded w-2/3" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : targeting.map((card: { title: string; desc: string; btn: string; href: string }, i: number) => (
                             <div key={i} className="bg-gradient-to-br from-white dark:from-primary/10 to-transparent border border-primary/20 p-8 rounded-[2.5rem] flex items-start gap-6 group hover:translate-y-[-4px] transition-all">
                                 <div className="p-4 bg-primary text-white rounded-2xl shadow-lg shadow-primary/20">
                                     <Zap size={20} />

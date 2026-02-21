@@ -14,9 +14,9 @@ import {
     Tag, FileText, Video, Users2, Percent, Package,
     CircleDot, Crown, Crosshair, Brain, Lightbulb, Activity
 } from 'lucide-react';
-import { generateChatContent } from '@/app/actions/ai';
-import { createBrowserClient } from '@/lib/supabase-client';
+import { generateChatContent, getAnalyticsAIData, AnalyticsAIData } from '@/app/actions/ai';
 import { useRouter } from 'next/navigation';
+
 
 type InsightsTab = 'audience' | 'behavior' | 'painpoints' | 'demand' | 'geo' | 'competitors' | 'predictive';
 
@@ -27,85 +27,76 @@ export default function AnalyticsReportingPage() {
     const [timeRange, setTimeRange] = useState("Last 30 Days");
     const [insightsTab, setInsightsTab] = useState<InsightsTab>('audience');
     const [exportSuccess, setExportSuccess] = useState(false);
-    const [growthData, setGrowthData] = useState<any[]>([]);
-    const [loadingData, setLoadingData] = useState(true);
-    const [demographics, setDemographics] = useState<any>(null);
-    const [roiData, setRoiData] = useState<any>(null);
+    const [loadingAI, setLoadingAI] = useState(true);
+    const [aiData, setAiData] = useState<AnalyticsAIData | null>(null);
 
     const timeOptions = ['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'This Year'];
-    const supabase = createBrowserClient();
+
 
     const handleRunAiAnalysis = async () => {
         setIsAnalyzing(true);
         try {
-            const prompt = "Analyze the recent marketing sentiment for Aura Marketing based on this mock data: 78% positive engagement, key themes include 'Innovation' and 'Speed'. Provide a 2-sentence summary of customer sentiment and one strategic recommendation.";
+            const score = aiData?.sentiment.score ?? 82;
+            const label = aiData?.sentiment.label ?? 'Positive';
+            const prompt = `Analyze the recent marketing sentiment for Aura Marketing. Current data: ${score}% ${label} engagement. Key themes: 'Innovation' and 'Speed'. Provide a 2-sentence summary and one strategic recommendation.`;
             const { success, content, error } = await generateChatContent(prompt);
             if (success && content) {
                 setAiSentiment(content);
-            } else {
-                throw new Error(error);
-            }
-        } catch (error) {
-            console.error(error);
-            setAiSentiment("Sentiment analysis unavailable. Please check system logs.");
+            } else throw new Error(error);
+        } catch {
+            setAiSentiment(aiData?.sentiment_insight ?? "Sentiment analysis unavailable. Please check system logs.");
         } finally {
             setIsAnalyzing(false);
         }
     };
 
     useEffect(() => {
-        const fetchAnalyticsData = async () => {
-            setLoadingData(true);
+        const CACHE_KEY = 'aura_analytics_data';
+        const CACHE_TTL = 10 * 60 * 1000;
+        const loadData = async () => {
+            setLoadingAI(true);
             try {
-                // Fetch Growth Velocity Series
-                const { data: seriesData, error: seriesError } = await supabase
-                    .from('analytics_series')
-                    .select('*')
-                    .eq('metric_name', 'growth')
-                    .eq('time_range', timeRange)
-                    .single();
-
-                if (seriesData) {
-                    setGrowthData(seriesData.data_points);
-                } else {
-                    // Fallback to static mock for velocity
-                    setGrowthData([60, 45, 80, 35, 90, 55, 70, 40, 65, 85].map((v, i) => ({ label: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed'][i], value: v })));
+                const cached = sessionStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { data, ts } = JSON.parse(cached);
+                    if (Date.now() - ts < CACHE_TTL) {
+                        setAiData(data);
+                        setAiSentiment(data.sentiment_insight);
+                        setLoadingAI(false);
+                        return;
+                    }
                 }
-
-                // Fetch Audience Insights
-                const { data: insightData, error: insightError } = await supabase
-                    .from('audience_insights')
-                    .select('*')
-                    .eq('category', 'audience')
-                    .single();
-
-                if (insightData) {
-                    setDemographics(insightData.data);
-                }
-
-                // Fetch ROI data
-                const { data: roiInsight } = await supabase
-                    .from('audience_insights')
-                    .select('data')
-                    .eq('category', 'roi')
-                    .single();
-                if (roiInsight?.data) setRoiData(roiInsight.data);
+                const result = await getAnalyticsAIData();
+                setAiData(result.data);
+                setAiSentiment(result.data.sentiment_insight);
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: result.data, ts: Date.now() }));
             } catch (err) {
-                console.warn('Supabase analytics fetch failed', err);
+                console.warn('Analytics AI fetch failed', err);
             } finally {
-                setLoadingData(false);
+                setLoadingAI(false);
             }
         };
+        loadData();
+    }, []);
 
-        fetchAnalyticsData();
-        handleRunAiAnalysis();
+    // Re-fetch when time range changes
+    useEffect(() => {
+        if (!loadingAI) {
+            sessionStorage.removeItem('aura_analytics_data');
+            setLoadingAI(true);
+            getAnalyticsAIData().then(r => {
+                setAiData(r.data);
+                setAiSentiment(r.data.sentiment_insight);
+                sessionStorage.setItem('aura_analytics_data', JSON.stringify({ data: r.data, ts: Date.now() }));
+            }).finally(() => setLoadingAI(false));
+        }
     }, [timeRange]);
 
-    // Real CSV export using actual growth data
+    // Real CSV export using actual AI growth data
     const handleExport = () => {
         const rows = [
-            ['Period', 'Growth Value', 'Time Range'],
-            ...growthData.map((d: any) => [d.label, d.value, timeRange])
+            ['Period', 'Growth Value', 'Engagement', 'Time Range'],
+            ...(aiData?.growthBars ?? []).map((d) => [d.label, d.value, d.engage, timeRange])
         ];
         const csv = rows.map(r => r.join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
@@ -119,10 +110,11 @@ export default function AnalyticsReportingPage() {
         setTimeout(() => setExportSuccess(false), 2500);
     };
 
+    const ai = aiData;
     const stats = [
-        { label: "Marketing ROI", value: roiData?.marketing_roi || "$12,450", change: roiData?.roi_change || "+12.5%", positive: true, icon: <TrendingUp size={20} /> },
-        { label: "Attributed Revenue", value: roiData?.attributed_revenue || "$45,200", change: roiData?.revenue_change || "+8.2%", positive: true, icon: <BarChart3 size={20} /> },
-        { label: "AI Efficiency Gain", value: roiData?.ai_efficiency || "+24%", change: roiData?.efficiency_change || "+4.1%", positive: true, icon: <Sparkles size={20} /> },
+        { label: "Marketing ROI", value: ai?.roi.marketing_roi ?? "$15,200", change: ai?.roi.roi_change ?? "+18.5%", positive: true, icon: <TrendingUp size={20} /> },
+        { label: "Attributed Revenue", value: ai?.roi.attributed_revenue ?? "$52,400", change: ai?.roi.revenue_change ?? "+11.2%", positive: true, icon: <BarChart3 size={20} /> },
+        { label: "AI Efficiency Gain", value: ai?.roi.ai_efficiency ?? "+28%", change: ai?.roi.efficiency_change ?? "+6.1%", positive: true, icon: <Sparkles size={20} /> },
     ];
 
     return (
@@ -200,12 +192,20 @@ export default function AnalyticsReportingPage() {
                         </div>
 
                         <div className="flex-1 min-h-[300px] flex items-end gap-3 px-2 mt-4">
-                            {growthData.map((d, i) => (
+                            {loadingAI ? (
+                                <div className="w-full h-full bg-primary/5 rounded-2xl animate-pulse flex items-center justify-center">
+                                    <Loader2 size={24} className="animate-spin text-primary/40" />
+                                </div>
+                            ) : (aiData?.growthBars ?? []).map((d, i) => (
                                 <div key={i} className="flex-1 relative group cursor-pointer">
                                     <div className="absolute inset-x-0 bottom-0 bg-primary/10 rounded-2xl h-[100%]"></div>
                                     <div
                                         style={{ height: `${d.value}%` }}
                                         className="absolute inset-x-0 bottom-0 bg-primary rounded-2xl transition-all duration-700 group-hover:brightness-110 shadow-lg shadow-primary/10"
+                                    ></div>
+                                    <div
+                                        style={{ height: `${d.engage}%`, opacity: 0.35 }}
+                                        className="absolute inset-x-0 bottom-0 bg-indigo-500 rounded-2xl transition-all duration-700"
                                     ></div>
                                     <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] px-2 py-1 rounded font-black whitespace-nowrap">
                                         +{d.value}%
@@ -214,7 +214,7 @@ export default function AnalyticsReportingPage() {
                             ))}
                         </div>
                         <div className="flex justify-between mt-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] px-2">
-                            {growthData.map((d, i) => <span key={`${d.label}-${i}`}>{d.label}</span>)}
+                            {(aiData?.growthBars ?? []).map((d, i) => <span key={`${d.label}-${i}`}>{d.label}</span>)}
                         </div>
                     </div>
 
@@ -231,10 +231,14 @@ export default function AnalyticsReportingPage() {
                             <div className="space-y-6">
                                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-3">Sentiment Score</p>
-                                    <div className="flex items-center gap-4">
-                                        <div className="text-4xl font-black italic">78%</div>
-                                        <div className="px-3 py-1 bg-emerald-500 rounded-full text-[9px] font-black uppercase tracking-widest">Positive</div>
-                                    </div>
+                                    {loadingAI ? (
+                                        <div className="h-8 bg-white/10 rounded-xl animate-pulse" />
+                                    ) : (
+                                        <div className="flex items-center gap-4">
+                                            <div className="text-4xl font-black italic">{ai?.sentiment.score ?? 82}%</div>
+                                            <div className="px-3 py-1 bg-emerald-500 rounded-full text-[9px] font-black uppercase tracking-widest">{ai?.sentiment.label ?? 'Positive'}</div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 relative">
@@ -280,38 +284,46 @@ export default function AnalyticsReportingPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="bg-primary/5 rounded-3xl border border-primary/10 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
-                                <div className="relative aspect-video overflow-hidden">
+                        {loadingAI ? (
+                            [1, 2, 3, 4].map(i => (
+                                <div key={i} className="bg-primary/5 rounded-3xl border border-primary/10 overflow-hidden animate-pulse">
+                                    <div className="aspect-video bg-primary/10" />
+                                    <div className="p-6 space-y-2">
+                                        <div className="h-3 bg-white/5 rounded w-1/2" />
+                                        <div className="h-4 bg-white/5 rounded w-3/4" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : (ai?.campaigns ?? []).map((c) => (
+                            <div key={c.id} className="bg-primary/5 rounded-3xl border border-primary/10 overflow-hidden group hover:border-primary/30 transition-all shadow-sm">
+                                <div className="relative aspect-video overflow-hidden bg-primary/10">
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10 transition-opacity group-hover:opacity-40"></div>
-                                    <img
-                                        src={`https://images.unsplash.com/photo-${1550000000000 + i * 1000}?w=500&auto=format&fit=crop`}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                        alt="Performance"
-                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center text-primary/20">
+                                        <Sparkles size={48} />
+                                    </div>
                                     <div className="absolute top-4 left-4 z-20 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20">
-                                        <p className="text-[9px] font-black text-white uppercase tracking-widest">Campaign #{i}</p>
+                                        <p className="text-[9px] font-black text-white uppercase tracking-widest">{c.platform} / {c.format}</p>
                                     </div>
                                     <div className="absolute bottom-4 right-4 z-20 text-white flex items-center gap-1">
                                         <TrendingUp size={14} className="text-emerald-400" />
-                                        <span className="text-xs font-black italic">+{12 + i}%</span>
+                                        <span className="text-xs font-black italic">{c.change}</span>
                                     </div>
                                 </div>
                                 <div className="p-6">
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Instagram / Reels</p>
-                                    <h4 className="font-bold text-sm truncate mb-4">Summer Spark Growth Hack...</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">{c.platform} / {c.format}</p>
+                                    <h4 className="font-bold text-sm truncate mb-4">{c.title}</h4>
                                     <div className="flex items-center justify-between text-slate-500 pt-4 border-t border-primary/5">
                                         <div className="flex items-center gap-1.5">
                                             <Heart size={14} />
-                                            <span className="text-[10px] font-bold">1.2k</span>
+                                            <span className="text-[10px] font-bold">{c.likes}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Share2 size={14} />
-                                            <span className="text-[10px] font-bold">240</span>
+                                            <span className="text-[10px] font-bold">{c.shares}</span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Eye size={14} />
-                                            <span className="text-[10px] font-bold">45.2k</span>
+                                            <span className="text-[10px] font-bold">{c.views}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -366,10 +378,10 @@ export default function AnalyticsReportingPage() {
                             {/* Audience Stat Cards */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
-                                    { label: "Ideal Age Range", value: "25–34", icon: <UserCheck size={20} />, badge: "Primary" },
-                                    { label: "Top Gender", value: "62% Female", icon: <Users size={20} />, badge: "Dominant" },
-                                    { label: "Income Level", value: "$45k–$75k", icon: <DollarSign size={20} />, badge: "Mid-High" },
-                                    { label: "Primary Language", value: "English", icon: <Languages size={20} />, badge: "89%" },
+                                    { label: "Ideal Age Range", value: ai?.audienceStats.age_range ?? "25–34", icon: <UserCheck size={20} />, badge: "Primary" },
+                                    { label: "Top Gender", value: ai?.audienceStats.top_gender ?? "62% Female", icon: <Users size={20} />, badge: "Dominant" },
+                                    { label: "Income Level", value: ai?.audienceStats.income_level ?? "$45k–$75k", icon: <DollarSign size={20} />, badge: "Mid-High" },
+                                    { label: "Primary Language", value: "English", icon: <Languages size={20} />, badge: ai?.audienceStats.language_pct ?? "89%" },
                                 ].map((stat, i) => (
                                     <div key={i} className="bg-primary/5 border border-primary/10 p-6 rounded-[2rem] shadow-sm hover:border-primary/30 transition-all group">
                                         <div className="flex justify-between items-start mb-5">
@@ -394,11 +406,11 @@ export default function AnalyticsReportingPage() {
                                         <div className="relative w-36 h-36">
                                             <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                                                 <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="3" className="text-white/5" />
-                                                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="68 32" strokeLinecap="round" className="text-primary" />
-                                                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="32 68" strokeDashoffset="-68" strokeLinecap="round" className="text-indigo-500" />
+                                                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray={`${ai?.audienceStats.mobile_pct ?? 68} ${100 - (ai?.audienceStats.mobile_pct ?? 68)}`} strokeLinecap="round" className="text-primary" />
+                                                <circle cx="18" cy="18" r="15.5" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray={`${ai?.audienceStats.desktop_pct ?? 32} ${100 - (ai?.audienceStats.desktop_pct ?? 32)}`} strokeDashoffset={`-${ai?.audienceStats.mobile_pct ?? 68}`} strokeLinecap="round" className="text-indigo-500" />
                                             </svg>
                                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                                <span className="text-2xl font-black italic text-white">68%</span>
+                                                <span className="text-2xl font-black italic text-white">{ai?.audienceStats.mobile_pct ?? 68}%</span>
                                                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Mobile</span>
                                             </div>
                                         </div>
@@ -409,14 +421,14 @@ export default function AnalyticsReportingPage() {
                                                 <Smartphone size={16} className="text-primary" />
                                                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-300">Mobile</span>
                                             </div>
-                                            <span className="text-[11px] font-black text-primary">68%</span>
+                                            <span className="text-[11px] font-black text-primary">{ai?.audienceStats.mobile_pct ?? 68}%</span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
                                                 <Monitor size={16} className="text-indigo-500" />
                                                 <span className="text-[11px] font-black uppercase tracking-widest text-slate-300">Desktop</span>
                                             </div>
-                                            <span className="text-[11px] font-black text-indigo-500">32%</span>
+                                            <span className="text-[11px] font-black text-indigo-500">{ai?.audienceStats.desktop_pct ?? 32}%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -428,13 +440,10 @@ export default function AnalyticsReportingPage() {
                                         <MapPin size={16} className="text-primary" />
                                     </div>
                                     <div className="space-y-5">
-                                        {[
-                                            { city: "Mumbai, India", val: 38 },
-                                            { city: "New York, USA", val: 24 },
-                                            { city: "London, UK", val: 18 },
-                                            { city: "Dubai, UAE", val: 12 },
-                                            { city: "Sydney, AU", val: 8 },
-                                        ].map(c => (
+                                        {(ai?.audienceStats.locations ?? [
+                                            { city: "Mumbai, India", val: 38 }, { city: "New York, USA", val: 24 },
+                                            { city: "London, UK", val: 18 }, { city: "Dubai, UAE", val: 12 }, { city: "Sydney, AU", val: 8 },
+                                        ]).map(c => (
                                             <div key={c.city}>
                                                 <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
                                                     <span>{c.city}</span>
@@ -457,14 +466,11 @@ export default function AnalyticsReportingPage() {
                                             <span className="bg-white/20 text-[9px] font-black px-2 py-0.5 rounded uppercase backdrop-blur-md">AI Detected</span>
                                         </div>
                                         <div className="flex flex-wrap gap-2 mb-8">
-                                            {[
-                                                { lang: 'English', pct: '89%' },
-                                                { lang: 'Hindi', pct: '42%' },
-                                                { lang: 'Spanish', pct: '18%' },
-                                                { lang: 'Arabic', pct: '12%' },
-                                                { lang: 'French', pct: '8%' },
-                                                { lang: 'German', pct: '5%' },
-                                            ].map(l => (
+                                            {(ai?.audienceStats.languages ?? [
+                                                { lang: 'English', pct: '89%' }, { lang: 'Hindi', pct: '42%' },
+                                                { lang: 'Spanish', pct: '18%' }, { lang: 'Arabic', pct: '12%' },
+                                                { lang: 'French', pct: '8%' }, { lang: 'German', pct: '5%' },
+                                            ]).map(l => (
                                                 <div key={l.lang} className="bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-default flex items-center gap-2">
                                                     <span>{l.lang}</span>
                                                     <span className="text-white/60">{l.pct}</span>
@@ -473,7 +479,7 @@ export default function AnalyticsReportingPage() {
                                         </div>
                                         <div className="p-5 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl">
                                             <p className="text-xs font-medium leading-relaxed italic opacity-90">
-                                                &quot;89% of your audience prefers English content. Consider creating Hindi variations to capture 42% of bilingual users.&quot;
+                                                &quot;{ai?.audienceStats.language_insight ?? '89% of your audience prefers English content. Consider creating Hindi variations to capture 42% of bilingual users.'}&quot;
                                             </p>
                                         </div>
                                     </div>
